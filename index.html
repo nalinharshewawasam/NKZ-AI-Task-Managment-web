@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NKZ Studio | Pro Dashboard</title>
+    <title>NKZ Studio | Pro Workspace</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; overflow-x: hidden; }
         
-        .glass-card { backdrop-filter: blur(15px); border-radius: 1.5rem; transition: 0.3s ease; }
+        .glass-card { backdrop-filter: blur(15px); border-radius: 1.5rem; transition: transform 0.2s, box-shadow 0.2s; cursor: grab; }
+        .glass-card:active { cursor: grabbing; transform: scale(1.02); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
         .glass-todo { background: rgba(241, 245, 249, 0.7); border: 1px solid rgba(148, 163, 184, 0.2); }
         .glass-doing { background: rgba(219, 234, 254, 0.7); border: 1px solid rgba(59, 130, 246, 0.2); }
         .glass-done { background: rgba(209, 250, 229, 0.7); border: 1px solid rgba(16, 185, 129, 0.2); }
@@ -29,10 +32,14 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.4; }
 
-        /* Priority Oval Tags */
         .p-high { background: #ef4444; color: white; }
         .p-medium { background: #f59e0b; color: white; }
         .p-low { background: #10b981; color: white; }
+
+        .column-container { min-height: 200px; padding-bottom: 50px; }
+        .sortable-ghost { opacity: 0.4; background: #e2e8f0; border: 2px dashed #3b82f6; }
+
+        #analytics-view { display: none; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row h-screen">
@@ -77,59 +84,70 @@
         </div>
 
         <nav class="flex-1 space-y-2">
-            <button class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold"><i class="fas fa-th-large"></i> Dashboard</button>
-            <button class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5"><i class="fas fa-chart-line"></i> Analytics</button>
+            <button onclick="showView('dashboard')" id="btn-dash" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold"><i class="fas fa-th-large"></i> Dashboard</button>
+            <button onclick="showView('analytics')" id="btn-anal" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5"><i class="fas fa-chart-line"></i> Analytics</button>
         </nav>
 
         <button id="logout-btn" class="mt-auto flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 font-bold"><i class="fas fa-power-off"></i> Logout</button>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-12">
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
-            <div>
-                <h2 class="text-3xl font-black text-slate-900 tracking-tight">Daily Workspace</h2>
-                <p class="text-slate-400 font-medium">Manage your progress and statistics.</p>
-            </div>
-            <button onclick="addTask()" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-600 transition-all">+ Add Task</button>
-        </header>
+        
+        <div id="dashboard-view">
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900 tracking-tight">Daily Workspace</h2>
+                    <p class="text-slate-400 font-medium">Drag tasks to update progress.</p>
+                </div>
+                <button onclick="addTask()" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-600 transition-all">+ Add Task</button>
+            </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-            <div class="grid grid-cols-2 gap-4 lg:col-span-1">
-                <div class="bg-blue-600 p-6 rounded-[2rem] text-white flex flex-col justify-center">
-                    <p class="text-xs font-bold opacity-70">Total Tasks</p>
-                    <h2 id="stat-total" class="text-4xl font-black">0</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div class="space-y-4">
+                    <h3 class="flex items-center gap-2 font-black text-slate-400 text-[10px] uppercase tracking-widest px-2"><span class="w-2 h-2 rounded-full bg-slate-300"></span> To Do</h3>
+                    <div id="col-todo" class="column-container space-y-4" data-status="todo"></div>
                 </div>
-                <div class="bg-emerald-500 p-6 rounded-[2rem] text-white flex flex-col justify-center">
-                    <p class="text-xs font-bold opacity-70">Completed</p>
-                    <h2 id="stat-done" class="text-4xl font-black">0</h2>
+                <div class="space-y-4">
+                    <h3 class="flex items-center gap-2 font-black text-blue-500 text-[10px] uppercase tracking-widest px-2"><span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> In Progress</h3>
+                    <div id="col-doing" class="column-container space-y-4" data-status="doing"></div>
                 </div>
-            </div>
-            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center lg:col-span-2 relative">
-                <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 self-start">Productivity Graph</h4>
-                <div class="w-full h-48">
-                    <canvas id="statusChart"></canvas>
+                <div class="space-y-4">
+                    <h3 class="flex items-center gap-2 font-black text-emerald-500 text-[10px] uppercase tracking-widest px-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Finished</h3>
+                    <div id="col-done" class="column-container space-y-4" data-status="done"></div>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="flex items-center gap-2 font-black text-rose-500 text-[10px] uppercase tracking-widest px-2"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Overdue</h3>
+                    <div id="col-overdue" class="column-container space-y-4" data-status="overdue"></div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-            <div class="space-y-4">
-                <h3 class="flex items-center gap-2 font-black text-slate-400 text-[10px] uppercase tracking-widest px-2"><span class="w-2 h-2 rounded-full bg-slate-300"></span> Pending</h3>
-                <div id="col-todo" class="space-y-4"></div>
-            </div>
-            <div class="space-y-4">
-                <h3 class="flex items-center gap-2 font-black text-blue-500 text-[10px] uppercase tracking-widest px-2"><span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> In Progress</h3>
-                <div id="col-doing" class="space-y-4"></div>
-            </div>
-            <div class="space-y-4">
-                <h3 class="flex items-center gap-2 font-black text-emerald-500 text-[10px] uppercase tracking-widest px-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Finished</h3>
-                <div id="col-done" class="space-y-4"></div>
-            </div>
-            <div class="space-y-4">
-                <h3 class="flex items-center gap-2 font-black text-rose-500 text-[10px] uppercase tracking-widest px-2"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Overdue</h3>
-                <div id="col-overdue" class="space-y-4"></div>
+        <div id="analytics-view">
+            <header class="mb-10">
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight">Performance Analytics</h2>
+                <p class="text-slate-400 font-medium">Detailed insights of your productivity.</p>
+            </header>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+                <div class="grid grid-cols-1 gap-4 lg:col-span-1">
+                    <div class="bg-blue-600 p-8 rounded-[2rem] text-white">
+                        <p class="text-xs font-bold opacity-70">Total Tasks Created</p>
+                        <h2 id="stat-total" class="text-5xl font-black">0</h2>
+                    </div>
+                    <div class="bg-emerald-500 p-8 rounded-[2rem] text-white">
+                        <p class="text-xs font-bold opacity-70">Tasks Completed</p>
+                        <h2 id="stat-done" class="text-5xl font-black">0</h2>
+                    </div>
+                </div>
+                <div class="bg-white p-10 rounded-[2rem] shadow-sm border border-slate-100 lg:col-span-2">
+                    <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Productivity Distribution</h4>
+                    <div class="h-64">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
+
     </main>
 
     <script type="module">
@@ -154,9 +172,44 @@
         let statusChart = null;
 
         onAuthStateChanged(auth, (user) => {
-            if (user) { currentUser = user; listenForTasks(); renderCalendar(); }
+            if (user) { currentUser = user; listenForTasks(); renderCalendar(); initSortable(); }
             else { window.location.href = 'login.html'; }
         });
+
+        // VIEW TOGGLE LOGIC
+        window.showView = (view) => {
+            const dash = document.getElementById('dashboard-view');
+            const anal = document.getElementById('analytics-view');
+            const btnDash = document.getElementById('btn-dash');
+            const btnAnal = document.getElementById('btn-anal');
+
+            if(view === 'dashboard') {
+                dash.style.display = 'block'; anal.style.display = 'none';
+                btnDash.className = "w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold";
+                btnAnal.className = "w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5";
+            } else {
+                dash.style.display = 'none'; anal.style.display = 'block';
+                btnAnal.className = "w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold";
+                btnDash.className = "w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5";
+            }
+        };
+
+        // DRAG AND DROP INIT
+        function initSortable() {
+            const cols = ['col-todo', 'col-doing', 'col-done', 'col-overdue'];
+            cols.forEach(colId => {
+                new Sortable(document.getElementById(colId), {
+                    group: 'tasks',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onEnd: async (evt) => {
+                        const taskId = evt.item.getAttribute('data-id');
+                        const newStatus = evt.to.getAttribute('data-status');
+                        await updateDoc(doc(db, "tasks", taskId), { status: newStatus });
+                    }
+                });
+            });
+        }
 
         window.addTask = () => document.getElementById('taskModal').style.display = 'flex';
         window.closeModal = () => document.getElementById('taskModal').style.display = 'none';
@@ -172,7 +225,6 @@
             }
         };
 
-        window.moveTask = async (id, status) => await updateDoc(doc(db, "tasks", id), { status });
         window.deleteTask = async (id) => { if(confirm("Delete task?")) await deleteDoc(doc(db, "tasks", id)); };
 
         function listenForTasks() {
@@ -195,11 +247,11 @@
                         const dayCell = document.querySelector(`.calendar-day[data-day="${dayNum}"]`);
                         if(dayCell) dayCell.classList.add('has-overdue');
                     }
-
                     stats[status]++;
 
                     const card = document.createElement('div');
                     card.className = `glass-card glass-${status} p-5 relative group`;
+                    card.setAttribute('data-id', d.id);
                     card.innerHTML = `
                         <div class="flex justify-between items-start mb-3">
                             <h4 class="font-bold text-slate-800 text-sm leading-tight">${data.title}</h4>
@@ -207,44 +259,38 @@
                                 <i class="fas fa-star text-[7px]"></i> ${data.priority}
                             </div>
                         </div>
-                        <div class="flex items-center gap-3 text-[10px] font-bold text-slate-400 mb-4">
+                        <div class="flex items-center gap-3 text-[10px] font-bold text-slate-400">
                             <span><i class="far fa-calendar-alt text-blue-400"></i> ${data.dueDate}</span>
-                            <span><i class="far fa-clock text-blue-400"></i> ${data.dueTime || '--:--'}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            ${status !== 'done' ? `<button onclick="moveTask('${d.id}', '${status==='todo'||status==='overdue'?'doing':'done'}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold shadow-md hover:scale-105 transition">${status==='doing'?'Complete':'Start Now'}</button>` : '<span class="text-[10px] font-bold text-emerald-600 px-1"><i class="fas fa-check-circle"></i> Completed</span>'}
                             <button onclick="deleteTask('${d.id}')" class="ml-auto text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     `;
                     cols[status].appendChild(card);
                 });
-                updateOverview(stats);
+                updateAnalytics(stats);
             });
         }
 
-        function updateOverview(stats) {
+        function updateAnalytics(stats) {
             document.getElementById('stat-total').innerText = stats.todo + stats.doing + stats.done + stats.overdue;
             document.getElementById('stat-done').innerText = stats.done;
 
             const ctx = document.getElementById('statusChart').getContext('2d');
             if(statusChart) statusChart.destroy();
             statusChart = new Chart(ctx, {
-                type: 'bar', // Changed to BAR chart for better mobile layout
+                type: 'doughnut',
                 data: {
                     labels: ['Pending', 'In Progress', 'Done', 'Overdue'],
                     datasets: [{
-                        label: 'Tasks',
                         data: [stats.todo, stats.doing, stats.done, stats.overdue],
                         backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444'],
-                        borderRadius: 12,
-                        barThickness: 30
+                        borderWidth: 0,
+                        hoverOffset: 20
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } },
-                    plugins: { legend: { display: false } }
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 25, font: { weight: 'bold', size: 10 } } } }
                 }
             });
         }
@@ -267,6 +313,7 @@
             }
         }
 
+        // 3D Background
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
