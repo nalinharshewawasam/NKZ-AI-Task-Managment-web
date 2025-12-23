@@ -153,12 +153,16 @@
         window.deleteTask = async (id) => { if(confirm("Delete task?")) await deleteDoc(doc(db, "tasks", id)); };
 
         function listenForTasks() {
-            if (status !== 'done' && data.dueDate < today) {
-    status = 'overdue';
-            const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
-            onSnapshot(q, (snapshot) => {
-                const cols = { todo: document.getElementById('col-todo'), doing: document.getElementById('col-doing'), done: document.getElementById('col-done'), overdue: document.getElementById('col-overdue') };
-                Object.values(cols).forEach(c => c.innerHTML = '');
+    const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
+    
+    onSnapshot(q, (snapshot) => {
+        const cols = { 
+            todo: document.getElementById('col-todo'), 
+            doing: document.getElementById('col-doing'), 
+            done: document.getElementById('col-done'), 
+            overdue: document.getElementById('col-overdue') 
+        };
+        Object.values(cols).forEach(c => c.innerHTML = '');
                 document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('has-overdue'));
                 const today = new Date().toISOString().split('T')[0];
 
@@ -231,4 +235,5 @@
     </script>
 </body>
 </html>
+
 
