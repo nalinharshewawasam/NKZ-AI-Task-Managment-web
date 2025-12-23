@@ -22,6 +22,15 @@
         .glass-card { backdrop-filter: blur(15px); border-radius: 1.5rem; transition: 0.3s; cursor: grab; background: var(--card-bg); border: 1px solid rgba(148, 163, 184, 0.1); }
         .glass-card:active { cursor: grabbing; transform: scale(1.02); }
 
+        /* Calendar Styling */
+        .calendar-container { background: rgba(255, 255, 255, 0.03); border-radius: 1.5rem; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 1.5rem; }
+        .cal-grid { display: grid; grid-template-cols: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .cal-day-name { font-size: 8px; font-weight: 800; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+        .cal-date { font-size: 10px; padding: 5px 0; border-radius: 6px; color: #94a3b8; transition: 0.2s; cursor: pointer; }
+        .cal-date:hover { background: rgba(59, 130, 246, 0.2); color: white; }
+        .cal-active { background: #3b82f6 !important; color: white !important; font-weight: 800; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .cal-dot { width: 3px; height: 3px; background: #3b82f6; border-radius: 50%; margin: 1px auto 0; }
+
         /* Status Colors */
         .border-todo { border-left: 5px solid #94a3b8; }
         .border-doing { border-left: 5px solid #3b82f6; }
@@ -65,13 +74,13 @@
         </div>
     </div>
 
-    <aside class="sidebar p-6 hidden md:flex flex-col h-full shadow-2xl">
+    <aside class="sidebar p-6 hidden md:flex flex-col h-full shadow-2xl overflow-y-auto">
         <div class="flex items-center gap-3 mb-10">
             <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-rocket text-white"></i></div>
             <span class="text-xl font-black tracking-tighter">NKZ STUDIO</span>
         </div>
 
-        <div class="bg-white/5 p-4 rounded-3xl mb-8 border border-white/10 flex items-center gap-3">
+        <div class="bg-white/5 p-4 rounded-3xl mb-6 border border-white/10 flex items-center gap-3">
             <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-lg" id="user-initials">N</div>
             <div>
                 <p class="text-xs font-bold text-slate-400">Welcome back,</p>
@@ -79,13 +88,30 @@
             </div>
         </div>
 
+        <div class="calendar-container">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-[10px] font-black tracking-widest text-blue-400 uppercase">December 2025</span>
+                <div class="flex gap-2">
+                    <i class="fas fa-chevron-left text-[8px] cursor-pointer opacity-50"></i>
+                    <i class="fas fa-chevron-right text-[8px] cursor-pointer opacity-50"></i>
+                </div>
+            </div>
+            <div class="cal-grid">
+                <div class="cal-day-name">M</div><div class="cal-day-name">T</div><div class="cal-day-name">W</div><div class="cal-day-name">T</div><div class="cal-day-name">F</div><div class="cal-day-name">S</div><div class="cal-day-name">S</div>
+                <div class="cal-date">1</div><div class="cal-date">2</div><div class="cal-date">3</div><div class="cal-date">4</div><div class="cal-date">5</div><div class="cal-date">6</div><div class="cal-date">7</div>
+                <div class="cal-date">8</div><div class="cal-date">9</div><div class="cal-date">10</div><div class="cal-date">11</div><div class="cal-date">12</div><div class="cal-date">13</div><div class="cal-date">14</div>
+                <div class="cal-date">15</div><div class="cal-date">16</div><div class="cal-date">17</div><div class="cal-date">18</div><div class="cal-date">19</div><div class="cal-date">20</div><div class="cal-date">21</div>
+                <div class="cal-date">22</div><div class="cal-date">23</div><div class="cal-date cal-active">24<div class="cal-dot"></div></div><div class="cal-date">25</div><div class="cal-date">26</div><div class="cal-date">27</div><div class="cal-date">28</div>
+                <div class="cal-date">29</div><div class="cal-date">30</div><div class="cal-date">31</div>
+            </div>
+        </div>
         <nav class="flex-1 space-y-2">
             <button onclick="showView('dashboard')" id="btn-dash" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold transition-all"><i class="fas fa-layer-group"></i> Dashboard</button>
             <button onclick="showView('analytics')" id="btn-anal" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5 transition-all"><i class="fas fa-chart-pie"></i> Analytics</button>
             <button onclick="toggleDarkMode()" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5 transition-all"><i class="fas fa-moon"></i> Dark Mode</button>
         </nav>
 
-        <button id="logout-btn" class="mt-auto flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 font-bold transition-colors"><i class="fas fa-power-off"></i> Sign Out</button>
+        <button id="logout-btn" class="mt-8 flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 font-bold transition-colors"><i class="fas fa-power-off"></i> Sign Out</button>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
@@ -175,7 +201,6 @@
             } else { window.location.href = 'login.html'; }
         });
 
-        // Toggle Views
         window.showView = (view) => {
             const dash = document.getElementById('dashboard-view');
             const anal = document.getElementById('analytics-view');
@@ -183,10 +208,8 @@
             anal.classList.toggle('hidden', view !== 'analytics');
         };
 
-        // Dark Mode
         window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
 
-        // Drag & Drop
         function initSortable() {
             ['col-todo', 'col-doing', 'col-done', 'col-overdue'].forEach(id => {
                 new Sortable(document.getElementById(id), {
@@ -250,7 +273,6 @@
                     document.getElementById(containers[status]).appendChild(card);
                 });
 
-                // Update UI Counters
                 Object.keys(stats).forEach(k => document.getElementById(`count-${k}`).innerText = stats[k]);
                 updateAnalytics(stats);
             });
@@ -285,10 +307,8 @@
             });
         }
 
-        // Date Display
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
-        // 3D Background Logic
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
