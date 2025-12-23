@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NKZ MASTER | The Ultimate Workspace</title>
+    <title>NKZ STUDIO | Pro Workspace</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -15,168 +15,193 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
         
         :root { 
-            --sidebar-bg: #0b1120; 
-            --main-bg: #f8fafc;
-            --glass-card: rgba(255, 255, 255, 0.9);
+            --bg-main: #f0f4f8; 
+            --sidebar-bg: #0f172a; 
+            --accent: #3b82f6; 
+            --glass-white: rgba(255, 255, 255, 0.7);
         }
         .dark-mode { 
-            --main-bg: #020617;
-            --glass-card: rgba(15, 23, 42, 0.8);
+            --bg-main: #020617; 
+            --sidebar-bg: #020617; 
+            --glass-white: rgba(30, 41, 59, 0.6);
         }
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--main-bg); transition: 0.4s; overflow: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); transition: 0.5s ease; overflow: hidden; }
         
-        /* The Sidebar & Calendar Container (Original Dark Look) */
-        .sidebar-container { background: var(--sidebar-bg); width: 280px; color: white; }
-        
-        /* Glass Calendar Widget */
-        .glass-calendar { 
-            background: rgba(255, 255, 255, 0.05); 
-            backdrop-filter: blur(10px); 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1.5rem;
+        /* THE LEGENDARY GLASS LOOK */
+        .glass-panel { 
+            background: var(--glass-white); 
+            backdrop-filter: blur(20px); 
+            border-radius: 2.5rem; 
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.04);
         }
+
+        .sidebar { background: var(--sidebar-bg); width: 300px; z-index: 100; transition: 0.3s; }
         
-        /* Task Cards (The Original Look) */
+        /* CALENDAR WIDGET - PRECISE LOOK */
+        .cal-container { background: rgba(255,255,255,0.03); border-radius: 2rem; padding: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .cal-day { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 10px; color: #94a3b8; transition: 0.3s; cursor: pointer; }
+        .cal-day:hover { background: rgba(255,255,255,0.1); color: white; }
+        .cal-day.active { background: #3b82f6; color: white; font-weight: 800; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.5); }
+        .cal-day.has-task { position: relative; }
+        .cal-day.has-task::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: #3b82f6; border-radius: 50%; }
+
+        /* TASK CARD - ORIGINAL DESIGN */
         .task-card { 
-            background: var(--glass-card); 
-            backdrop-filter: blur(12px); 
-            border-radius: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white; 
+            border-radius: 1.8rem; 
+            padding: 1.5rem; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.03);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: grab;
         }
-        .task-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
+        .task-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 25px 50px rgba(0,0,0,0.08); }
+        .dark-mode .task-card { background: #1e293b; border-color: rgba(255,255,255,0.05); color: white; }
 
-        .cal-day { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 8px; transition: 0.2s; color: #64748b; }
-        .cal-day.active { background: #3b82f6; color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4); }
-        .cal-day.has-task { border-bottom: 2px solid #3b82f6; }
-
-        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.5; }
-        .column-scroll { scrollbar-width: none; -ms-overflow-style: none; }
-        .column-scroll::-webkit-scrollbar { display: none; }
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.6; }
+        .custom-scroll::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
 <body class="flex h-screen">
 
     <canvas id="bg-canvas"></canvas>
 
-    <aside class="sidebar-container flex flex-col p-6 h-full">
-        <div class="flex items-center gap-3 mb-10 px-2">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-rocket"></i></div>
-            <h1 class="text-lg font-black tracking-tight">NKZ MASTER</h1>
+    <aside class="sidebar flex flex-col p-8 text-white">
+        <div class="flex items-center gap-4 mb-12">
+            <div class="w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/40">
+                <i class="fas fa-bolt text-lg"></i>
+            </div>
+            <h1 class="text-xl font-black tracking-tight">NKZ STUDIO</h1>
         </div>
 
-        <div class="glass-calendar p-5 mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <span id="monthName" class="text-[10px] font-black uppercase tracking-widest text-blue-400">DECEMBER</span>
-                <div class="flex gap-2">
-                    <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left text-[8px]"></i></button>
-                    <button onclick="changeMonth(1)"><i class="fas fa-chevron-right text-[8px]"></i></button>
+        <div class="cal-container mb-10">
+            <div class="flex justify-between items-center mb-5">
+                <span id="monthName" class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">December 2025</span>
+                <div class="flex gap-3">
+                    <button onclick="changeMonth(-1)" class="opacity-50 hover:opacity-100 transition-all"><i class="fas fa-chevron-left text-[10px]"></i></button>
+                    <button onclick="changeMonth(1)" class="opacity-50 hover:opacity-100 transition-all"><i class="fas fa-chevron-right text-[10px]"></i></button>
                 </div>
             </div>
-            <div class="grid grid-cols-7 gap-1 text-center mb-2 opacity-30 text-[8px] font-bold">
+            <div class="grid grid-cols-7 gap-1 text-center mb-3 opacity-20 text-[9px] font-bold">
                 <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
             </div>
             <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
         </div>
 
-        <nav class="flex-1 space-y-2">
-            <button onclick="showView('dashboard')" id="nav-dash" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white shadow-lg shadow-blue-600/20"><i class="fas fa-th-large"></i> Workspace</button>
-            <button onclick="showView('analytics')" id="nav-anal" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:text-white hover:bg-white/5 font-bold transition-all"><i class="fas fa-chart-pie"></i> Analytics</button>
-            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:text-white hover:bg-white/5 font-bold transition-all"><i class="fas fa-moon"></i> Dark Mode</button>
+        <nav class="flex-1 space-y-3">
+            <button onclick="showView('dashboard')" id="nav-dash" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold shadow-xl shadow-blue-600/30 transition-all">
+                <i class="fas fa-layer-group"></i> Dashboard
+            </button>
+            <button onclick="showView('analytics')" id="nav-anal" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-white/5 font-bold transition-all">
+                <i class="fas fa-chart-pie"></i> Analytics
+            </button>
+            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-white/5 font-bold transition-all">
+                <i class="fas fa-moon"></i> Dark Mode
+            </button>
         </nav>
 
-        <div class="mt-8 bg-white/5 p-4 rounded-2xl flex items-center gap-3 border border-white/5 group relative">
-            <div id="u-avatar" class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-black">U</div>
-            <div class="flex-1 overflow-hidden">
-                <p id="u-name" class="text-xs font-black truncate">User Name</p>
-                <p class="text-[9px] text-slate-500 font-bold">Pro Member</p>
+        <div class="mt-8 bg-white/5 p-5 rounded-[2rem] flex items-center gap-4 border border-white/5 group relative cursor-pointer overflow-hidden">
+            <div id="user-initial" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-black text-lg shadow-lg">U</div>
+            <div class="flex-1">
+                <p id="user-display-name" class="text-sm font-black truncate">NKZ User</p>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pro Account</p>
             </div>
-            <button onclick="signOutUser()" class="opacity-0 group-hover:opacity-100 transition-all text-rose-500"><i class="fas fa-power-off text-sm"></i></button>
+            <button onclick="signOutUser()" class="absolute right-4 opacity-0 group-hover:opacity-100 transition-all text-rose-500"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="p-8 md:p-10 flex justify-between items-center">
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="p-10 flex justify-between items-center">
             <div>
-                <h2 id="view-title" class="text-3xl font-black tracking-tight mb-1">Workspace</h2>
+                <h2 id="view-title" class="text-4xl font-black tracking-tight mb-2 dark:text-white">Workspace</h2>
                 <div class="flex items-center gap-3">
-                    <span id="live-date" class="text-[10px] font-extrabold uppercase tracking-widest text-blue-500 bg-blue-500/10 px-3 py-1 rounded-full">WEDNESDAY, DEC 24</span>
-                    <p class="text-[10px] text-slate-400 font-bold">Organize your life, one task at a time.</p>
+                    <span id="header-date" class="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-500/10 px-4 py-1.5 rounded-full">WEDNESDAY, DEC 24</span>
+                    <p class="text-[11px] text-slate-400 font-bold">Stay productive, stay focused.</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="relative hidden md:block">
-                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" placeholder="Search tasks..." class="pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-2xl outline-none w-64 shadow-sm dark:text-white border border-transparent focus:border-blue-500 transition-all">
+            <div class="flex items-center gap-5">
+                <div class="relative group">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-all"></i>
+                    <input type="text" placeholder="Search tasks..." class="pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-[1.5rem] outline-none w-72 shadow-sm border border-transparent focus:border-blue-500 transition-all dark:text-white">
                 </div>
-                <button onclick="openModal()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-600/20 active:scale-95 transition-all">+ NEW TASK</button>
+                <button onclick="openModal()" class="bg-blue-600 text-white px-10 py-4 rounded-[1.5rem] font-black shadow-2xl shadow-blue-600/30 hover:scale-105 active:scale-95 transition-all">+ NEW TASK</button>
             </div>
         </header>
 
-        <div id="dashboard-view" class="flex-1 overflow-x-auto p-10 pt-0">
-            <div class="flex gap-8 h-full min-w-[1200px]">
-                <div class="flex-1 flex flex-col min-w-[280px]">
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4 mb-4 flex justify-between">Pending <span id="todo-count" class="text-blue-500">0</span></h3>
-                    <div id="col-todo" class="column-scroll flex-1 space-y-4 overflow-y-auto pb-10" data-status="todo"></div>
+        <div id="dashboard-view" class="flex-1 overflow-x-auto p-10 pt-0 custom-scroll">
+            <div class="flex gap-8 h-full min-w-[1250px]">
+                <div class="flex-1 flex flex-col">
+                    <div class="flex justify-between items-center px-4 mb-6">
+                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Pending</h3>
+                        <span id="count-todo" class="bg-slate-200 dark:bg-slate-800 text-[10px] font-black px-3 py-1 rounded-lg">0</span>
+                    </div>
+                    <div id="col-todo" class="flex-1 space-y-5 pb-10" data-status="todo"></div>
                 </div>
-                <div class="flex-1 flex flex-col min-w-[280px]">
-                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest px-4 mb-4 flex justify-between">Working <span id="doing-count">0</span></h3>
-                    <div id="col-doing" class="column-scroll flex-1 space-y-4 overflow-y-auto pb-10" data-status="doing"></div>
+                <div class="flex-1 flex flex-col">
+                    <div class="flex justify-between items-center px-4 mb-6">
+                        <h3 class="text-[11px] font-black text-blue-500 uppercase tracking-widest">In Progress</h3>
+                        <span id="count-doing" class="bg-blue-100 dark:bg-blue-900/30 text-blue-500 text-[10px] font-black px-3 py-1 rounded-lg">0</span>
+                    </div>
+                    <div id="col-doing" class="flex-1 space-y-5 pb-10" data-status="doing"></div>
                 </div>
-                <div class="flex-1 flex flex-col min-w-[280px]">
-                    <h3 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-4 mb-4 flex justify-between">Finished <span id="done-count">0</span></h3>
-                    <div id="col-done" class="column-scroll flex-1 space-y-4 overflow-y-auto pb-10" data-status="done"></div>
+                <div class="flex-1 flex flex-col">
+                    <div class="flex justify-between items-center px-4 mb-6">
+                        <h3 class="text-[11px] font-black text-emerald-500 uppercase tracking-widest">Completed</h3>
+                        <span id="count-done" class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 text-[10px] font-black px-3 py-1 rounded-lg">0</span>
+                    </div>
+                    <div id="col-done" class="flex-1 space-y-5 pb-10" data-status="done"></div>
                 </div>
-                <div class="flex-1 flex flex-col min-w-[280px]">
-                    <h3 class="text-[10px] font-black text-rose-500 uppercase tracking-widest px-4 mb-4 flex justify-between">Delayed <span id="overdue-count">0</span></h3>
-                    <div id="col-overdue" class="column-scroll flex-1 space-y-4 overflow-y-auto pb-10" data-status="overdue"></div>
+                <div class="flex-1 flex flex-col">
+                    <div class="flex justify-between items-center px-4 mb-6">
+                        <h3 class="text-[11px] font-black text-rose-500 uppercase tracking-widest">Overdue</h3>
+                        <span id="count-overdue" class="bg-rose-100 dark:bg-rose-900/30 text-rose-500 text-[10px] font-black px-3 py-1 rounded-lg">0</span>
+                    </div>
+                    <div id="col-overdue" class="flex-1 space-y-5 pb-10" data-status="overdue"></div>
                 </div>
             </div>
         </div>
 
-        <div id="analytics-view" class="hidden flex-1 overflow-y-auto p-10">
-            <div class="max-w-5xl mx-auto space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-blue-600 p-8 rounded-[2.5rem] text-white shadow-xl">
-                        <p class="text-xs font-bold opacity-70 mb-1">Total Missions</p>
-                        <h4 id="stat-total" class="text-5xl font-black tracking-tighter">0</h4>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-xl">
-                        <p class="text-xs font-bold text-slate-400 mb-1">Success Rate</p>
-                        <h4 id="stat-rate" class="text-5xl font-black tracking-tighter dark:text-white">0%</h4>
-                    </div>
-                    <div class="bg-emerald-500 p-8 rounded-[2.5rem] text-white shadow-xl">
-                        <p class="text-xs font-bold opacity-70 mb-1">Completed</p>
-                        <h4 id="stat-done" class="text-5xl font-black tracking-tighter">0</h4>
-                    </div>
+        <div id="analytics-view" class="hidden flex-1 overflow-y-auto p-10 custom-scroll">
+            <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="glass-panel p-10 bg-blue-600 !text-white border-none">
+                    <p class="text-[11px] font-black uppercase tracking-widest opacity-60 mb-2">Total Tasks</p>
+                    <h4 id="stat-total" class="text-6xl font-black tracking-tighter">0</h4>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-10 rounded-[3rem] shadow-xl">
-                    <h4 class="font-black text-xl mb-8 dark:text-white">Performance Overview</h4>
-                    <div class="h-[350px]"><canvas id="perfChart"></canvas></div>
+                <div class="glass-panel p-10">
+                    <p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Efficiency</p>
+                    <h4 id="stat-rate" class="text-6xl font-black tracking-tighter dark:text-white">0%</h4>
                 </div>
+                <div class="glass-panel p-10 bg-emerald-500 !text-white border-none">
+                    <p class="text-[11px] font-black uppercase tracking-widest opacity-60 mb-2">Success</p>
+                    <h4 id="stat-done" class="text-6xl font-black tracking-tighter">0</h4>
+                </div>
+            </div>
+            <div class="max-w-5xl mx-auto glass-panel p-12">
+                <h4 class="font-black text-2xl mb-10 dark:text-white">Performance Overview</h4>
+                <div class="h-[400px]"><canvas id="mainChart"></canvas></div>
             </div>
         </div>
     </main>
 
-    <div id="taskModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[1000] hidden items-center justify-center">
-        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] w-[90%] max-w-lg shadow-2xl">
-            <h3 class="text-2xl font-black mb-6 dark:text-white">Deploy New Mission</h3>
-            <div class="space-y-4">
-                <input type="text" id="taskTitle" placeholder="Task Name" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 ring-blue-500 dark:text-white">
-                <textarea id="taskDesc" placeholder="Brief details..." class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none h-24 dark:text-white"></textarea>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="date" id="taskDate" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl dark:text-white">
-                    <select id="taskPriority" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl dark:text-white">
-                        <option value="high">High Priority</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="low">Low Priority</option>
+    <div id="taskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[1000] hidden items-center justify-center p-6">
+        <div class="glass-panel bg-white dark:bg-slate-900 p-10 w-full max-w-xl shadow-2xl">
+            <h3 class="text-3xl font-black mb-8 dark:text-white">New Mission</h3>
+            <div class="space-y-5">
+                <input type="text" id="taskTitle" placeholder="Task Name" class="w-full p-5 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 ring-blue-500 dark:text-white font-bold">
+                <textarea id="taskDesc" placeholder="Brief description..." class="w-full p-5 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none h-32 dark:text-white"></textarea>
+                <div class="grid grid-cols-2 gap-5">
+                    <input type="date" id="taskDate" class="p-5 bg-slate-100 dark:bg-slate-800 rounded-2xl dark:text-white font-bold">
+                    <select id="taskPriority" class="p-5 bg-slate-100 dark:bg-slate-800 rounded-2xl dark:text-white font-bold">
+                        <option value="high">🔥 High</option>
+                        <option value="medium" selected>⚡ Medium</option>
+                        <option value="low">🌱 Low</option>
                     </select>
                 </div>
-                <div class="flex gap-4 pt-4">
-                    <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400">Cancel</button>
-                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl">Save Mission</button>
+                <div class="flex gap-5 pt-6">
+                    <button onclick="closeModal()" class="flex-1 py-5 font-black text-slate-400 hover:text-slate-600 transition-all">Discard</button>
+                    <button onclick="saveTask()" class="flex-2 px-12 py-5 bg-blue-600 text-white font-black rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all">Deploy Task</button>
                 </div>
             </div>
         </div>
@@ -200,25 +225,25 @@
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
-                document.getElementById('u-name').innerText = user.email.split('@')[0];
-                document.getElementById('u-avatar').innerText = user.email.charAt(0).toUpperCase();
-                init();
+                document.getElementById('user-display-name').innerText = user.email.split('@')[0];
+                document.getElementById('user-initial').innerText = user.email.charAt(0).toUpperCase();
+                initApp();
             } else { window.location.href = 'login.html'; }
         });
 
-        function init() {
+        function initApp() {
             renderCalendar();
-            listenTasks();
-            initSortable();
-            updateLiveDate();
+            listenToTasks();
+            initDragAndDrop();
+            updateLiveTime();
         }
 
-        function updateLiveDate() {
+        function updateLiveTime() {
             const options = { weekday: 'long', month: 'short', day: 'numeric' };
-            document.getElementById('live-date').innerText = new Date().toLocaleDateString('en-US', options).toUpperCase();
+            document.getElementById('header-date').innerText = new Date().toLocaleDateString('en-US', options).toUpperCase();
         }
 
-        // CALENDAR
+        // --- CALENDAR ---
         window.changeMonth = (dir) => { currentMonth.setMonth(currentMonth.getMonth() + dir); renderCalendar(); };
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
@@ -235,57 +260,48 @@
             }
         }
 
-        // VIEW NAVIGATION
-        window.showView = (view) => {
-            document.getElementById('dashboard-view').classList.toggle('hidden', view !== 'dashboard');
-            document.getElementById('analytics-view').classList.toggle('hidden', view !== 'analytics');
-            document.getElementById('view-title').innerText = view === 'dashboard' ? 'Workspace' : 'Analytics Overview';
-            
-            document.getElementById('nav-dash').className = view === 'dashboard' ? 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white shadow-lg' : 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:text-white hover:bg-white/5 font-bold transition-all';
-            document.getElementById('nav-anal').className = view === 'analytics' ? 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white shadow-lg' : 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:text-white hover:bg-white/5 font-bold transition-all';
-            
-            if(view === 'analytics') updateChart();
-        };
-
-        // FIREBASE DATA
-        function listenTasks() {
+        // --- DATA ---
+        function listenToTasks() {
             onSnapshot(query(collection(db, "tasks"), where("userId", "==", currentUser.uid)), (snap) => {
                 tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                renderTasks(); renderCalendar();
+                renderUI();
             });
         }
 
-        function renderTasks() {
+        function renderUI() {
             const cols = { todo: 'col-todo', doing: 'col-doing', done: 'col-done', overdue: 'col-overdue' };
             Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
             let counts = { todo: 0, doing: 0, done: 0, overdue: 0 };
-            const todayStr = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
 
             tasks.forEach(task => {
                 let status = task.status;
-                if(status !== 'done' && task.dueDate < todayStr) status = 'overdue';
+                if(status !== 'done' && task.dueDate < today) status = 'overdue';
                 counts[status]++;
 
                 const card = document.createElement('div');
-                card.className = 'task-card p-6 cursor-grab active:cursor-grabbing';
+                card.className = 'task-card group';
                 card.setAttribute('data-id', task.id);
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
-                        <span class="text-[8px] font-black uppercase px-2 py-1 rounded-md ${task.priority === 'high' ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}">${task.priority || 'Medium'}</span>
-                        <button onclick="deleteTask('${task.id}')" class="text-slate-300 hover:text-rose-500 transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                        <span class="text-[9px] font-black uppercase px-3 py-1 rounded-full ${task.priority === 'high' ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}">${task.priority}</span>
+                        <button onclick="deleteTask('${task.id}')" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-all"><i class="fas fa-trash-alt text-xs"></i></button>
                     </div>
-                    <h4 class="font-extrabold text-sm mb-2 dark:text-white">${task.title}</h4>
-                    <p class="text-[10px] text-slate-400 line-clamp-2 mb-4 font-medium">${task.desc || 'No description provided.'}</p>
-                    <div class="flex items-center gap-2 text-[9px] font-bold text-slate-400"><i class="far fa-calendar-alt"></i> ${task.dueDate}</div>
+                    <h4 class="font-extrabold text-[15px] mb-2 leading-tight">${task.title}</h4>
+                    <p class="text-[11px] text-slate-400 font-medium line-clamp-2 mb-5">${task.desc || 'No details provided.'}</p>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                        <i class="far fa-calendar-check text-blue-500"></i> ${task.dueDate}
+                    </div>
                 `;
                 document.getElementById(cols[status]).appendChild(card);
             });
-            Object.keys(counts).forEach(k => document.getElementById(`${k}-count`).innerText = counts[k]);
+            Object.keys(counts).forEach(k => document.getElementById(`count-${k}`).innerText = counts[k]);
+            renderCalendar();
         }
 
-        // CHART
+        // --- ANALYTICS ---
         function updateChart() {
-            const ctx = document.getElementById('perfChart').getContext('2d');
+            const ctx = document.getElementById('mainChart').getContext('2d');
             const data = [
                 tasks.filter(t => t.status === 'todo').length,
                 tasks.filter(t => t.status === 'doing').length,
@@ -293,7 +309,11 @@
                 tasks.filter(t => t.status === 'overdue').length
             ];
             if(chart) chart.destroy();
-            chart = new Chart(ctx, { type: 'bar', data: { labels: ['Pending', 'Working', 'Done', 'Delayed'], datasets: [{ data: data, backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444'], borderRadius: 12 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
+            chart = new Chart(ctx, { 
+                type: 'bar', 
+                data: { labels: ['PENDING', 'WORKING', 'FINISHED', 'OVERDUE'], datasets: [{ data: data, backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#f43f5e'], borderRadius: 15 }] }, 
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, border: { display: false }, ticks: { font: { weight: 'bold' } } } } } 
+            });
             
             document.getElementById('stat-total').innerText = tasks.length;
             const done = tasks.filter(t => t.status === 'done').length;
@@ -301,12 +321,23 @@
             document.getElementById('stat-rate').innerText = tasks.length > 0 ? Math.round((done/tasks.length)*100) + '%' : '0%';
         }
 
-        // ACTIONS
+        // --- GLOBAL ACTIONS ---
+        window.showView = (view) => {
+            document.getElementById('dashboard-view').classList.toggle('hidden', view !== 'dashboard');
+            document.getElementById('analytics-view').classList.toggle('hidden', view !== 'analytics');
+            document.getElementById('view-title').innerText = view === 'dashboard' ? 'Workspace' : 'Analytics';
+            
+            document.getElementById('nav-dash').className = view === 'dashboard' ? 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold shadow-xl shadow-blue-600/30' : 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-white/5 font-bold transition-all';
+            document.getElementById('nav-anal').className = view === 'analytics' ? 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold shadow-xl shadow-blue-600/30' : 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-500 hover:bg-white/5 font-bold transition-all';
+            
+            if(view === 'analytics') updateChart();
+        };
+
         window.openModal = () => document.getElementById('taskModal').style.display = 'flex';
         window.closeModal = () => document.getElementById('taskModal').style.display = 'none';
         window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
         window.signOutUser = () => signOut(auth);
-        window.deleteTask = async (id) => { if(confirm("Confirm deletion?")) await deleteDoc(doc(db, "tasks", id)); };
+        window.deleteTask = async (id) => { if(confirm("Confirm Deletion?")) await deleteDoc(doc(db, "tasks", id)); };
 
         window.saveTask = async () => {
             const title = document.getElementById('taskTitle').value;
@@ -319,22 +350,24 @@
             }
         };
 
-        function initSortable() {
+        function initDragAndDrop() {
             ['col-todo', 'col-doing', 'col-done', 'col-overdue'].forEach(id => {
-                new Sortable(document.getElementById(id), { group: 'tasks', animation: 250, onEnd: async (e) => {
+                new Sortable(document.getElementById(id), { group: 'tasks', animation: 300, onEnd: async (e) => {
                     await updateDoc(doc(db, "tasks", e.item.getAttribute('data-id')), { status: e.to.getAttribute('data-status') });
                 }});
             });
         }
 
-        // 3D BACKGROUND (TORUS KNOT)
+        // --- 3D BG (ORIGINAL) ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshNormalMaterial({ wireframe: true, opacity: 0.1, transparent: true }));
-        scene.add(knot); camera.position.z = 30;
-        function animate() { requestAnimationFrame(animate); knot.rotation.x += 0.001; knot.rotation.y += 0.002; renderer.render(scene, camera); }
+        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+        const material = new THREE.MeshNormalMaterial({ wireframe: true, opacity: 0.1, transparent: true });
+        const knot = new THREE.Mesh(geometry, material);
+        scene.add(knot); camera.position.z = 35;
+        function animate() { requestAnimationFrame(animate); knot.rotation.x += 0.002; knot.rotation.y += 0.002; renderer.render(scene, camera); }
         animate();
     </script>
 </body>
