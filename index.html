@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NKZ Ultimate | Pro Workspace</title>
+    <title>NKZ Master | The Ultimate Workspace</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -14,138 +14,122 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
         
-        :root { --bg-main: #f8fafc; --text-main: #0f172a; --card-bg: rgba(255, 255, 255, 0.7); }
-        .dark-mode { --bg-main: #0f172a; --text-main: #f8fafc; --card-bg: rgba(30, 41, 59, 0.7); }
+        :root { --bg-main: #f8fafc; --text-main: #1e293b; --card-bg: #ffffff; --border: rgba(0,0,0,0.05); }
+        .dark-mode { --bg-main: #020617; --text-main: #f1f5f9; --card-bg: #0f172a; --border: rgba(255,255,255,0.1); }
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); transition: 0.3s; overflow-x: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); transition: background 0.4s, color 0.4s; overflow-x: hidden; }
         
-        .glass-card { backdrop-filter: blur(15px); border-radius: 1.5rem; transition: 0.3s; cursor: grab; background: var(--card-bg); border: 1px solid rgba(148, 163, 184, 0.1); }
-        .glass-card:active { cursor: grabbing; transform: scale(1.02); }
+        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 1.5rem; transition: 0.3s; cursor: grab; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .dark-mode .glass-card { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4); }
 
-        .border-todo { border-left: 5px solid #94a3b8; }
-        .border-doing { border-left: 5px solid #3b82f6; }
-        .border-done { border-left: 5px solid #10b981; }
-        .border-overdue { border-left: 5px solid #ef4444; }
-
-        .sidebar { background: #0f172a; color: white; width: 260px; z-index: 50; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .sidebar { background: #020617; color: white; width: 280px; z-index: 50; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(12px); }
         
-        /* Profile Dropdown Styling */
-        #profile-dropdown { display: none; position: absolute; left: 60px; top: 180px; width: 200px; background: white; color: #0f172a; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 60; overflow: hidden; }
-        .dark-mode #profile-dropdown { background: #1e293b; color: white; }
+        #profile-dropdown { display: none; position: absolute; left: 20px; bottom: 80px; width: 240px; background: var(--card-bg); color: var(--text-main); border-radius: 1.2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 60; border: 1px solid var(--border); }
         
-        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.3; }
         .p-high { background: #ef4444; color: white; }
         .p-medium { background: #f59e0b; color: white; }
         .p-low { background: #10b981; color: white; }
+        
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.2; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row h-screen">
 
     <canvas id="bg-canvas"></canvas>
 
-    <div id="profileModal" class="modal">
-        <div class="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] w-[95%] max-w-md shadow-2xl">
-            <h3 class="text-2xl font-black mb-6">User Profile</h3>
-            <div class="space-y-4 text-center">
-                <div id="profile-pic-large" class="w-20 h-20 mx-auto rounded-3xl bg-blue-600 flex items-center justify-center text-3xl font-black text-white mb-4">N</div>
-                <input type="text" id="edit-username" placeholder="Display Name" class="w-full p-4 bg-slate-50 dark:bg-slate-700 border-none rounded-2xl outline-blue-500">
-                <p id="user-email-display" class="text-sm text-slate-400 font-bold"></p>
-                <div class="flex gap-4 mt-8">
-                    <button onclick="closeProfileModal()" class="flex-1 py-4 text-slate-400 font-bold">Close</button>
-                    <button onclick="updateProfile()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg">Save Changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div id="taskModal" class="modal">
-        <div class="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] w-[95%] max-w-md shadow-2xl">
-            <h3 class="text-2xl font-black mb-6">New Task</h3>
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] w-[95%] max-w-lg shadow-2xl">
+            <h3 class="text-2xl font-black mb-6">Create New Task</h3>
             <div class="space-y-4">
-                <input type="text" id="taskTitle" placeholder="Task Name" class="w-full p-4 bg-slate-50 dark:bg-slate-700 border-none rounded-2xl outline-blue-500">
+                <input type="text" id="taskTitle" placeholder="Task Title" class="w-full p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-blue-500 dark:text-white">
+                <textarea id="taskDesc" placeholder="Describe the task details..." class="w-full p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-blue-500 h-24 dark:text-white"></textarea>
+                
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="date" id="taskDate" class="p-4 bg-slate-50 dark:bg-slate-700 border-none rounded-2xl outline-blue-500 text-sm">
-                    <select id="taskPriority" class="p-4 bg-slate-50 dark:bg-slate-700 border-none rounded-2xl outline-blue-500 text-sm">
-                        <option value="high">High</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="low">Low</option>
+                    <input type="date" id="taskDate" class="p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-blue-500 text-sm dark:text-white">
+                    <select id="taskPriority" class="p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-blue-500 text-sm dark:text-white">
+                        <option value="high">🔥 High Priority</option>
+                        <option value="medium" selected>⚡ Medium Priority</option>
+                        <option value="low">🍃 Low Priority</option>
                     </select>
                 </div>
-                <div class="flex gap-4 mt-8">
+
+                <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 p-4 rounded-2xl text-center">
+                    <label class="cursor-pointer">
+                        <i class="fas fa-cloud-upload-alt text-2xl text-blue-500 mb-2"></i>
+                        <p class="text-xs font-bold text-slate-400">Click to upload task image</p>
+                        <input type="file" id="taskImage" class="hidden" accept="image/*">
+                    </label>
+                    <div id="img-preview" class="mt-2 hidden"><img src="" class="h-20 mx-auto rounded-lg shadow-md"></div>
+                </div>
+
+                <div class="flex gap-4 mt-6">
                     <button onclick="closeModal()" class="flex-1 py-4 text-slate-400 font-bold">Cancel</button>
-                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg">Add Task</button>
+                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg">Save Task</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <aside class="sidebar p-6 hidden md:flex flex-col h-full shadow-2xl relative">
-        <div class="flex items-center gap-3 mb-10">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-rocket text-white"></i></div>
-            <span class="text-xl font-black">NKZ STUDIO</span>
+    <aside class="sidebar p-6 hidden md:flex flex-col h-full relative">
+        <div class="flex items-center gap-3 mb-12">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center"><i class="fas fa-shield-alt text-white"></i></div>
+            <span class="text-xl font-black tracking-tight">NKZ MASTER</span>
         </div>
 
-        <div onclick="toggleProfileDropdown()" class="cursor-pointer hover:bg-white/10 transition-all p-4 rounded-3xl mb-8 border border-white/10 flex items-center gap-3 relative">
-            <div id="user-initials" class="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center font-bold text-lg">U</div>
-            <div class="flex-1">
-                <p class="text-[10px] font-bold text-slate-400">User Profile</p>
-                <p id="user-display-name" class="text-sm font-black truncate w-24">Loading...</p>
-            </div>
-            <i class="fas fa-chevron-down text-[10px] text-slate-500"></i>
-        </div>
-
-        <div id="profile-dropdown">
-            <button onclick="openProfileModal()" class="w-full text-left px-6 py-4 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-sm"><i class="fas fa-user-edit mr-3"></i> Edit Profile</button>
-            <button onclick="toggleDarkMode()" class="w-full text-left px-6 py-4 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-sm border-t border-slate-100 dark:border-slate-700"><i class="fas fa-moon mr-3"></i> Dark Mode</button>
-            <button onclick="signOutUser()" class="w-full text-left px-6 py-4 hover:bg-red-50 text-red-500 font-bold text-sm border-t border-slate-100 dark:border-slate-700"><i class="fas fa-sign-out-alt mr-3"></i> Sign Out</button>
-        </div>
-
-        <nav class="flex-1 space-y-2">
-            <button onclick="showView('dashboard')" id="btn-dash" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold"><i class="fas fa-th-large"></i> Dashboard</button>
-            <button onclick="showView('analytics')" id="btn-anal" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5"><i class="fas fa-chart-line"></i> Analytics</button>
+        <nav class="flex-1 space-y-4">
+            <button onclick="showView('dashboard')" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white shadow-lg shadow-blue-500/30 transition-all"><i class="fas fa-grip-horizontal"></i> Workspace</button>
+            <button onclick="showView('analytics')" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all"><i class="fas fa-chart-bar"></i> Efficiency</button>
         </nav>
+
+        <div class="mt-auto relative">
+            <div onclick="toggleProfileDropdown()" class="bg-white/5 border border-white/10 p-4 rounded-3xl flex items-center gap-3 cursor-pointer hover:bg-white/10 transition-all">
+                <div id="user-initials" class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center font-black">U</div>
+                <div class="flex-1 overflow-hidden">
+                    <p id="user-display-name" class="text-xs font-black truncate">User Name</p>
+                    <p class="text-[9px] text-slate-500 font-bold">Pro Account</p>
+                </div>
+                <i class="fas fa-ellipsis-v text-xs text-slate-600"></i>
+            </div>
+            
+            <div id="profile-dropdown">
+                <button onclick="toggleDarkMode()" class="w-full text-left px-5 py-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-xl transition-all"><i class="fas fa-moon mr-3 text-blue-500"></i> Dark Mode</button>
+                <button onclick="signOutUser()" class="w-full text-left px-5 py-4 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 rounded-b-xl transition-all border-t border-slate-100 dark:border-slate-800"><i class="fas fa-sign-out-alt mr-3"></i> Sign Out</button>
+            </div>
+        </div>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
         
         <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
-            <div class="relative w-full md:w-96">
-                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search tasks..." class="w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-2xl outline-none shadow-sm">
+            <div>
+                <h2 class="text-3xl font-black tracking-tight">Mission Control</h2>
+                <p class="text-slate-400 text-sm font-bold">Drag tasks to optimize your workflow.</p>
             </div>
-            <button onclick="addTask()" class="bg-slate-900 dark:bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl">+ NEW TASK</button>
+            <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-600/20 transform active:scale-95 transition-all">+ NEW TASK</button>
         </div>
 
         <div id="dashboard-view">
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
                 <div class="space-y-4">
-                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest px-2">Pending</h3>
-                    <div id="col-todo" class="column-container space-y-4" data-status="todo"></div>
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 flex justify-between">Pending <span class="bg-slate-200 dark:bg-slate-800 px-2 rounded" id="todo-count">0</span></h3>
+                    <div id="col-todo" class="column-container min-h-[500px] space-y-4" data-status="todo"></div>
                 </div>
                 <div class="space-y-4">
-                    <h3 class="text-xs font-black text-blue-500 uppercase tracking-widest px-2">Working</h3>
-                    <div id="col-doing" class="column-container space-y-4" data-status="doing"></div>
+                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] px-2 flex justify-between">Working <span class="bg-blue-100 dark:bg-blue-900/30 px-2 rounded" id="doing-count">0</span></h3>
+                    <div id="col-doing" class="column-container min-h-[500px] space-y-4" data-status="doing"></div>
                 </div>
                 <div class="space-y-4">
-                    <h3 class="text-xs font-black text-emerald-500 uppercase tracking-widest px-2">Completed</h3>
-                    <div id="col-done" class="column-container space-y-4" data-status="done"></div>
+                    <h3 class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] px-2 flex justify-between">Success <span class="bg-emerald-100 dark:bg-emerald-900/30 px-2 rounded" id="done-count">0</span></h3>
+                    <div id="col-done" class="column-container min-h-[500px] space-y-4" data-status="done"></div>
                 </div>
                 <div class="space-y-4">
-                    <h3 class="text-xs font-black text-rose-500 uppercase tracking-widest px-2">Overdue</h3>
-                    <div id="col-overdue" class="column-container space-y-4" data-status="overdue"></div>
+                    <h3 class="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] px-2 flex justify-between">Delayed <span class="bg-rose-100 dark:bg-rose-900/30 px-2 rounded" id="overdue-count">0</span></h3>
+                    <div id="col-overdue" class="column-container min-h-[500px] space-y-4" data-status="overdue"></div>
                 </div>
             </div>
         </div>
 
-        <div id="analytics-view" class="hidden">
-            <div class="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm max-w-4xl mx-auto">
-                <h4 class="text-xl font-black mb-8">Performance Analytics</h4>
-                <div class="h-80">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-        </div>
     </main>
 
     <script type="module">
@@ -153,6 +137,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // FIREBASE CONFIG (SAME AS BEFORE)
         const firebaseConfig = {
             apiKey: "AIzaSyDd6T85SZAc9eh0Kv2BjaKg4GKHP659bgY",
             authDomain: "nkz-task-management.firebaseapp.com",
@@ -166,57 +151,38 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         let currentUser = null;
-        let statusChart = null;
 
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
-                const name = localStorage.getItem('nkz_name') || user.email.split('@')[0];
-                document.getElementById('user-display-name').innerText = name;
-                document.getElementById('user-initials').innerText = name.charAt(0).toUpperCase();
-                document.getElementById('user-email-display').innerText = user.email;
+                document.getElementById('user-display-name').innerText = user.email.split('@')[0];
+                document.getElementById('user-initials').innerText = user.email.charAt(0).toUpperCase();
                 listenForTasks(); 
                 initSortable();
             } else { window.location.href = 'login.html'; }
         });
 
-        // USER PROFILE FUNCTIONS
-        window.toggleProfileDropdown = () => {
-            const dropdown = document.getElementById('profile-dropdown');
-            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-        };
-
-        window.openProfileModal = () => {
-            document.getElementById('profileModal').style.display = 'flex';
-            document.getElementById('edit-username').value = document.getElementById('user-display-name').innerText;
-            document.getElementById('profile-dropdown').style.display = 'none';
-        };
-
-        window.closeProfileModal = () => document.getElementById('profileModal').style.display = 'none';
-
-        window.updateProfile = () => {
-            const newName = document.getElementById('edit-username').value;
-            if(newName) {
-                localStorage.setItem('nkz_name', newName);
-                document.getElementById('user-display-name').innerText = newName;
-                document.getElementById('user-initials').innerText = newName.charAt(0).toUpperCase();
-                document.getElementById('profile-pic-large').innerText = newName.charAt(0).toUpperCase();
-                closeProfileModal();
-            }
-        };
-
-        window.signOutUser = () => signOut(auth);
+        // DARK MODE & PROFILE
         window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+        window.toggleProfileDropdown = () => {
+            const d = document.getElementById('profile-dropdown');
+            d.style.display = d.style.display === 'block' ? 'none' : 'block';
+        };
 
-        window.showView = (view) => {
-            document.getElementById('dashboard-view').classList.toggle('hidden', view !== 'dashboard');
-            document.getElementById('analytics-view').classList.toggle('hidden', view !== 'analytics');
+        // IMAGE PREVIEW LOGIC
+        document.getElementById('taskImage').onchange = function() {
+            const [file] = this.files;
+            if (file) {
+                const preview = document.getElementById('img-preview');
+                preview.classList.remove('hidden');
+                preview.children[0].src = URL.createObjectURL(file);
+            }
         };
 
         function initSortable() {
             ['col-todo', 'col-doing', 'col-done', 'col-overdue'].forEach(id => {
                 new Sortable(document.getElementById(id), {
-                    group: 'tasks', animation: 200,
+                    group: 'tasks', animation: 250,
                     onEnd: async (evt) => {
                         const taskId = evt.item.getAttribute('data-id');
                         const newStatus = evt.to.getAttribute('data-status');
@@ -231,11 +197,26 @@
 
         window.saveTask = async () => {
             const title = document.getElementById('taskTitle').value;
+            const desc = document.getElementById('taskDesc').value;
             const date = document.getElementById('taskDate').value;
             const priority = document.getElementById('taskPriority').value;
+            
             if (title && date) {
-                await addDoc(collection(db, "tasks"), { title, dueDate: date, priority, status: "todo", userId: currentUser.uid });
-                closeModal();
+                // Image Handling (Simulated Base64 for now to keep it simple)
+                let imgData = "";
+                const file = document.getElementById('taskImage').files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onloadend = async () => {
+                        imgData = reader.result;
+                        await addDoc(collection(db, "tasks"), { title, desc, dueDate: date, priority, status: "todo", userId: currentUser.uid, image: imgData });
+                        closeModal();
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    await addDoc(collection(db, "tasks"), { title, desc, dueDate: date, priority, status: "todo", userId: currentUser.uid });
+                    closeModal();
+                }
             }
         };
 
@@ -243,61 +224,51 @@
             onSnapshot(query(collection(db, "tasks"), where("userId", "==", currentUser.uid)), (snapshot) => {
                 const cols = { todo: 'col-todo', doing: 'col-doing', done: 'col-done', overdue: 'col-overdue' };
                 Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
-                let stats = { todo: 0, doing: 0, done: 0, overdue: 0 };
+                
                 const today = new Date().toISOString().split('T')[0];
+                let counts = { todo: 0, doing: 0, done: 0, overdue: 0 };
 
                 snapshot.docs.forEach(d => {
                     const data = d.data();
                     let status = data.status;
                     if (status !== 'done' && data.dueDate < today) status = 'overdue';
-                    stats[status]++;
+                    counts[status]++;
 
                     const card = document.createElement('div');
-                    card.className = `glass-card p-5 border-${status} group`;
+                    card.className = `glass-card p-5 group animate-in zoom-in-95 duration-200`;
                     card.setAttribute('data-id', d.id);
+                    
+                    const imgHtml = data.image ? `<img src="${data.image}" class="w-full h-32 object-cover rounded-xl mb-3 shadow-inner">` : "";
+                    
                     card.innerHTML = `
+                        ${imgHtml}
                         <div class="flex justify-between items-start mb-3">
-                            <h4 class="font-bold text-sm">${data.title}</h4>
-                            <span class="p-${data.priority} px-2 py-0.5 rounded-lg text-[8px] font-black uppercase"><i class="fas fa-star"></i></span>
+                            <h4 class="font-bold text-sm leading-snug">${data.title}</h4>
+                            <span class="p-${data.priority} px-2 py-0.5 rounded-lg text-[7px] font-black uppercase">${data.priority}</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 font-bold"><i class="far fa-clock mr-1"></i> ${data.dueDate}</p>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 font-medium">${data.desc || "No description provided."}</p>
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <span class="text-[9px] font-bold text-blue-500 uppercase tracking-tighter"><i class="far fa-calendar-alt mr-1"></i> ${data.dueDate}</span>
+                            <button onclick="deleteTask('${d.id}')" class="text-rose-400 opacity-0 group-hover:opacity-100 transition-all"><i class="fas fa-trash"></i></button>
+                        </div>
                     `;
                     document.getElementById(cols[status]).appendChild(card);
                 });
-                updateAnalytics(stats);
+                Object.keys(counts).forEach(k => document.getElementById(`${k}-count`).innerText = counts[k]);
             });
         }
 
-        window.filterTasks = () => {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.glass-card').forEach(card => {
-                card.style.display = card.innerText.toLowerCase().includes(query) ? 'block' : 'none';
-            });
-        };
+        window.deleteTask = async (id) => { if(confirm("Discard this mission?")) await deleteDoc(doc(db, "tasks", id)); };
+        window.signOutUser = () => signOut(auth);
 
-        function updateAnalytics(stats) {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            if(statusChart) statusChart.destroy();
-            statusChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pending', 'Working', 'Done', 'Overdue'],
-                    datasets: [{
-                        data: [stats.todo, stats.doing, stats.done, stats.overdue],
-                        backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444'],
-                        borderWidth: 0, cutout: '70%'
-                    }]
-                }
-            });
-        }
-
+        // 3D Visualizer
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         const mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshNormalMaterial({ wireframe: true, transparent: true, opacity: 0.1 }));
         scene.add(mesh); camera.position.z = 30;
-        function animate() { requestAnimationFrame(animate); mesh.rotation.y += 0.002; renderer.render(scene, camera); }
+        function animate() { requestAnimationFrame(animate); mesh.rotation.y += 0.003; renderer.render(scene, camera); }
         animate();
     </script>
 </body>
