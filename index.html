@@ -17,21 +17,25 @@
         :root { --bg-main: #f8fafc; --text-main: #0f172a; --card-bg: rgba(255, 255, 255, 0.7); }
         .dark-mode { --bg-main: #0f172a; --text-main: #f8fafc; --card-bg: rgba(30, 41, 59, 0.7); }
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); transition: 0.3s; overflow-x: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); transition: 0.3s; overflow: hidden; }
         
+        /* Sidebar Scrollbar Hidden */
+        .sidebar { scrollbar-width: none; -ms-overflow-style: none; }
+        .sidebar::-webkit-scrollbar { display: none; }
+
         .glass-card { backdrop-filter: blur(15px); border-radius: 1.5rem; transition: 0.3s; cursor: grab; background: var(--card-bg); border: 1px solid rgba(148, 163, 184, 0.1); }
         .glass-card:active { cursor: grabbing; transform: scale(1.02); }
 
-        /* Calendar Styling */
-        .calendar-container { background: rgba(255, 255, 255, 0.03); border-radius: 1.5rem; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 1.5rem; }
-        .cal-grid { display: grid; grid-template-cols: repeat(7, 1fr); gap: 4px; text-align: center; }
-        .cal-day-name { font-size: 8px; font-weight: 800; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
-        .cal-date { font-size: 10px; padding: 5px 0; border-radius: 6px; color: #94a3b8; transition: 0.2s; cursor: pointer; }
-        .cal-date:hover { background: rgba(59, 130, 246, 0.2); color: white; }
-        .cal-active { background: #3b82f6 !important; color: white !important; font-weight: 800; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
-        .cal-dot { width: 3px; height: 3px; background: #3b82f6; border-radius: 50%; margin: 1px auto 0; }
+        /* Compact Sidebar Calendar */
+        .calendar-widget { background: rgba(255, 255, 255, 0.05); border-radius: 1.2rem; padding: 0.8rem; margin: 0.5rem 0 1.5rem 0; border: 1px solid rgba(255, 255, 255, 0.08); }
+        .cal-header { font-size: 10px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center; }
+        .cal-grid { display: grid; grid-template-cols: repeat(7, 1fr); gap: 2px; }
+        .cal-day-label { font-size: 7px; color: #64748b; font-weight: 900; text-align: center; padding-bottom: 4px; }
+        .cal-day { font-size: 9px; color: #94a3b8; text-align: center; padding: 4px 0; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .cal-day:hover { background: rgba(59, 130, 246, 0.2); color: white; }
+        .cal-today { background: #3b82f6 !important; color: white !important; font-weight: 900; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
 
-        /* Status Colors */
+        /* Status Borders */
         .border-todo { border-left: 5px solid #94a3b8; }
         .border-doing { border-left: 5px solid #3b82f6; }
         .border-done { border-left: 5px solid #10b981; }
@@ -41,15 +45,12 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.3; }
 
-        .search-bar { transition: 0.3s; border: 1px solid rgba(148, 163, 184, 0.2); }
-        .search-bar:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
-
         .p-high { background: #ef4444; color: white; }
         .p-medium { background: #f59e0b; color: white; }
         .p-low { background: #10b981; color: white; }
     </style>
 </head>
-<body class="flex flex-col md:flex-row h-screen">
+<body class="flex h-screen">
 
     <canvas id="bg-canvas"></canvas>
 
@@ -75,103 +76,71 @@
     </div>
 
     <aside class="sidebar p-6 hidden md:flex flex-col h-full shadow-2xl overflow-y-auto">
-        <div class="flex items-center gap-3 mb-10">
+        <div class="flex items-center gap-3 mb-8">
             <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-rocket text-white"></i></div>
             <span class="text-xl font-black tracking-tighter">NKZ STUDIO</span>
         </div>
 
-        <div class="bg-white/5 p-4 rounded-3xl mb-6 border border-white/10 flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-lg" id="user-initials">N</div>
-            <div>
-                <p class="text-xs font-bold text-slate-400">Welcome back,</p>
-                <p class="text-sm font-black truncate w-24" id="user-display-name">Nalin H.</p>
+        <div class="bg-white/5 p-4 rounded-3xl mb-4 border border-white/10 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-md" id="user-initials">N</div>
+            <div class="overflow-hidden">
+                <p class="text-[10px] font-bold text-slate-400">Welcome,</p>
+                <p class="text-xs font-black truncate w-24" id="user-display-name">Nalin H.</p>
             </div>
         </div>
 
-        <div class="calendar-container">
-            <div class="flex justify-between items-center mb-4">
-                <span class="text-[10px] font-black tracking-widest text-blue-400 uppercase">December 2025</span>
-                <div class="flex gap-2">
-                    <i class="fas fa-chevron-left text-[8px] cursor-pointer opacity-50"></i>
-                    <i class="fas fa-chevron-right text-[8px] cursor-pointer opacity-50"></i>
-                </div>
-            </div>
+        <div class="calendar-widget">
+            <div class="cal-header" id="calMonth">December 2025</div>
             <div class="cal-grid">
-                <div class="cal-day-name">M</div><div class="cal-day-name">T</div><div class="cal-day-name">W</div><div class="cal-day-name">T</div><div class="cal-day-name">F</div><div class="cal-day-name">S</div><div class="cal-day-name">S</div>
-                <div class="cal-date">1</div><div class="cal-date">2</div><div class="cal-date">3</div><div class="cal-date">4</div><div class="cal-date">5</div><div class="cal-date">6</div><div class="cal-date">7</div>
-                <div class="cal-date">8</div><div class="cal-date">9</div><div class="cal-date">10</div><div class="cal-date">11</div><div class="cal-date">12</div><div class="cal-date">13</div><div class="cal-date">14</div>
-                <div class="cal-date">15</div><div class="cal-date">16</div><div class="cal-date">17</div><div class="cal-date">18</div><div class="cal-date">19</div><div class="cal-date">20</div><div class="cal-date">21</div>
-                <div class="cal-date">22</div><div class="cal-date">23</div><div class="cal-date cal-active">24<div class="cal-dot"></div></div><div class="cal-date">25</div><div class="cal-date">26</div><div class="cal-date">27</div><div class="cal-date">28</div>
-                <div class="cal-date">29</div><div class="cal-date">30</div><div class="cal-date">31</div>
+                <div class="cal-day-label">M</div><div class="cal-day-label">T</div><div class="cal-day-label">W</div><div class="cal-day-label">T</div><div class="cal-day-label">F</div><div class="cal-day-label">S</div><div class="cal-day-label">S</div>
+                <div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div><div class="cal-day">4</div><div class="cal-day">5</div><div class="cal-day">6</div><div class="cal-day">7</div>
+                <div class="cal-day">8</div><div class="cal-day">9</div><div class="cal-day">10</div><div class="cal-day">11</div><div class="cal-day">12</div><div class="cal-day">13</div><div class="cal-day">14</div>
+                <div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day">20</div><div class="cal-day">21</div>
+                <div class="cal-day">22</div><div class="cal-day">23</div><div class="cal-day cal-today">24</div><div class="cal-day">25</div><div class="cal-day">26</div><div class="cal-day">27</div><div class="cal-day">28</div>
+                <div class="cal-day">29</div><div class="cal-day">30</div><div class="cal-day">31</div>
             </div>
         </div>
-        <nav class="flex-1 space-y-2">
-            <button onclick="showView('dashboard')" id="btn-dash" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold transition-all"><i class="fas fa-layer-group"></i> Dashboard</button>
-            <button onclick="showView('analytics')" id="btn-anal" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5 transition-all"><i class="fas fa-chart-pie"></i> Analytics</button>
-            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5 transition-all"><i class="fas fa-moon"></i> Dark Mode</button>
+
+        <nav class="flex-1 space-y-1">
+            <button onclick="showView('dashboard')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl bg-blue-600 font-bold text-sm transition-all"><i class="fas fa-layer-group"></i> Dashboard</button>
+            <button onclick="showView('analytics')" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-400 hover:bg-white/5 font-bold text-sm transition-all"><i class="fas fa-chart-pie"></i> Analytics</button>
+            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-400 hover:bg-white/5 font-bold text-sm transition-all"><i class="fas fa-moon"></i> Dark Mode</button>
         </nav>
 
-        <button id="logout-btn" class="mt-8 flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 font-bold transition-colors"><i class="fas fa-power-off"></i> Sign Out</button>
+        <button id="logout-btn" class="mt-4 flex items-center gap-4 px-5 py-3 text-slate-500 hover:text-red-400 font-bold text-sm transition-colors"><i class="fas fa-power-off"></i> Sign Out</button>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
-        
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
-            <div class="relative w-full md:w-96 group">
+        <div class="flex justify-between items-center mb-10">
+             <div class="relative w-96">
                 <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search your tasks..." class="search-bar w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium shadow-sm">
+                <input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search tasks..." class="w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-2xl outline-none shadow-sm">
             </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="hidden md:block text-right">
-                    <p id="current-date" class="text-xs font-black text-blue-500 uppercase tracking-widest"></p>
-                    <p class="text-slate-400 text-[10px] font-bold">Have a productive day!</p>
-                </div>
-                <button onclick="addTask()" class="bg-slate-900 dark:bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:scale-105 transition-transform">+ NEW TASK</button>
-            </div>
+            <button onclick="addTask()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:scale-105 transition-transform">+ NEW TASK</button>
         </div>
 
         <div id="dashboard-view">
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-                <div class="space-y-5">
-                    <h3 class="flex justify-between items-center font-black text-slate-400 text-[10px] uppercase tracking-[0.2em] px-2"><span>Pending</span><span id="count-todo" class="bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md">0</span></h3>
-                    <div id="col-todo" class="column-container space-y-4" data-status="todo"></div>
-                </div>
-                <div class="space-y-5">
-                    <h3 class="flex justify-between items-center font-black text-blue-500 text-[10px] uppercase tracking-[0.2em] px-2"><span>In Progress</span><span id="count-doing" class="bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-md">0</span></h3>
-                    <div id="col-doing" class="column-container space-y-4" data-status="doing"></div>
-                </div>
-                <div class="space-y-5">
-                    <h3 class="flex justify-between items-center font-black text-emerald-500 text-[10px] uppercase tracking-[0.2em] px-2"><span>Completed</span><span id="count-done" class="bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md">0</span></h3>
-                    <div id="col-done" class="column-container space-y-4" data-status="done"></div>
-                </div>
-                <div class="space-y-5">
-                    <h3 class="flex justify-between items-center font-black text-rose-500 text-[10px] uppercase tracking-[0.2em] px-2"><span>Overdue</span><span id="count-overdue" class="bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-md">0</span></h3>
-                    <div id="col-overdue" class="column-container space-y-4" data-status="overdue"></div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="space-y-4"><h3 class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-2">Pending <span id="count-todo" class="ml-2 opacity-50">0</span></h3><div id="col-todo" class="space-y-4" data-status="todo"></div></div>
+                <div class="space-y-4"><h3 class="text-[10px] font-black uppercase text-blue-500 tracking-widest px-2">In Progress <span id="count-doing" class="ml-2 opacity-50">0</span></h3><div id="col-doing" class="space-y-4" data-status="doing"></div></div>
+                <div class="space-y-4"><h3 class="text-[10px] font-black uppercase text-emerald-500 tracking-widest px-2">Completed <span id="count-done" class="ml-2 opacity-50">0</span></h3><div id="col-done" class="space-y-4" data-status="done"></div></div>
+                <div class="space-y-4"><h3 class="text-[10px] font-black uppercase text-rose-500 tracking-widest px-2">Overdue <span id="count-overdue" class="ml-2 opacity-50">0</span></h3><div id="col-overdue" class="space-y-4" data-status="overdue"></div></div>
             </div>
         </div>
 
         <div id="analytics-view" class="hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm">
-                    <canvas id="statusChart" class="max-h-80"></canvas>
-                </div>
-                <div class="space-y-6">
-                    <div class="bg-blue-600 p-8 rounded-[2.5rem] text-white shadow-lg shadow-blue-500/20">
-                        <p class="text-xs font-bold opacity-70">Efficiency Rate</p>
-                        <h2 id="efficiency-stat" class="text-5xl font-black mt-2">0%</h2>
-                    </div>
-                    <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white">
-                        <p class="text-xs font-bold opacity-70">Focus Time</p>
-                        <h2 class="text-4xl font-black mt-2">2.4h <span class="text-sm opacity-50">/ day</span></h2>
-                    </div>
+                <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm"><canvas id="statusChart"></canvas></div>
+                <div class="bg-blue-600 p-8 rounded-[2.5rem] text-white flex flex-col justify-center">
+                    <p class="text-xs font-bold opacity-70">Efficiency</p>
+                    <h2 id="efficiency-stat" class="text-6xl font-black mt-2">0%</h2>
                 </div>
             </div>
         </div>
     </main>
 
     <script type="module">
+        // Firebase සහ අනෙකුත් Logic (ඔයාගේ කලින් code එකමයි)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -202,10 +171,8 @@
         });
 
         window.showView = (view) => {
-            const dash = document.getElementById('dashboard-view');
-            const anal = document.getElementById('analytics-view');
-            dash.classList.toggle('hidden', view !== 'dashboard');
-            anal.classList.toggle('hidden', view !== 'analytics');
+            document.getElementById('dashboard-view').classList.toggle('hidden', view !== 'dashboard');
+            document.getElementById('analytics-view').classList.toggle('hidden', view !== 'analytics');
         };
 
         window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
@@ -239,14 +206,13 @@
             }
         };
 
-        window.deleteTask = async (id) => { if(confirm("Discard this task?")) await deleteDoc(doc(db, "tasks", id)); };
+        window.deleteTask = async (id) => { if(confirm("Delete task?")) await deleteDoc(doc(db, "tasks", id)); };
 
         function listenForTasks() {
             const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
             onSnapshot(q, (snapshot) => {
                 const containers = { todo: 'col-todo', doing: 'col-doing', done: 'col-done', overdue: 'col-overdue' };
                 Object.values(containers).forEach(id => document.getElementById(id).innerHTML = '');
-                
                 let stats = { todo: 0, doing: 0, done: 0, overdue: 0 };
                 const today = new Date().toISOString().split('T')[0];
 
@@ -254,68 +220,50 @@
                     const data = d.data();
                     let status = data.status;
                     if (status !== 'done' && data.dueDate < today) status = 'overdue';
-
                     stats[status]++;
                     const card = document.createElement('div');
-                    card.className = `glass-card p-5 border-${status} group animate-in slide-in-from-bottom-2 duration-300`;
+                    card.className = `glass-card p-5 border-${status} group`;
                     card.setAttribute('data-id', d.id);
                     card.setAttribute('data-title', data.title.toLowerCase());
                     card.innerHTML = `
-                        <div class="flex justify-between items-start mb-4">
-                            <h4 class="font-bold text-sm leading-snug">${data.title}</h4>
-                            <span class="p-${data.priority || 'medium'} px-2 py-0.5 rounded-lg text-[7px] font-black uppercase"><i class="fas fa-star"></i></span>
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-sm">${data.title}</h4>
+                            <span class="p-${data.priority} px-2 py-0.5 rounded text-[8px] font-black uppercase">${data.priority}</span>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[9px] font-bold text-slate-400"><i class="far fa-calendar-check mr-1"></i> ${data.dueDate}</span>
-                            <button onclick="deleteTask('${d.id}')" class="opacity-0 group-hover:opacity-100 text-rose-400 transition-all"><i class="fas fa-trash-alt text-xs"></i></button>
+                        <div class="flex items-center justify-between opacity-60">
+                            <span class="text-[10px] font-bold italic">${data.dueDate}</span>
+                            <button onclick="deleteTask('${d.id}')" class="text-rose-400 text-xs"><i class="fas fa-trash"></i></button>
                         </div>
                     `;
                     document.getElementById(containers[status]).appendChild(card);
                 });
-
                 Object.keys(stats).forEach(k => document.getElementById(`count-${k}`).innerText = stats[k]);
                 updateAnalytics(stats);
             });
         }
 
-        window.filterTasks = () => {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.glass-card').forEach(card => {
-                const title = card.getAttribute('data-title');
-                card.style.display = title.includes(query) ? 'block' : 'none';
-            });
-        };
-
         function updateAnalytics(stats) {
             const total = stats.todo + stats.doing + stats.done + stats.overdue;
             const efficiency = total ? Math.round((stats.done / total) * 100) : 0;
             document.getElementById('efficiency-stat').innerText = efficiency + '%';
-
             const ctx = document.getElementById('statusChart').getContext('2d');
             if(statusChart) statusChart.destroy();
             statusChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Pending', 'Working', 'Done', 'Overdue'],
-                    datasets: [{
-                        data: [stats.todo, stats.doing, stats.done, stats.overdue],
-                        backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444'],
-                        borderWidth: 0, cutout: '75%'
-                    }]
+                    datasets: [{ data: [stats.todo, stats.doing, stats.done, stats.overdue], backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444'], borderWidth: 0 }]
                 },
-                options: { plugins: { legend: { position: 'right', labels: { font: { weight: 'bold' }, usePointStyle: true } } } }
+                options: { cutout: '80%' }
             });
         }
 
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-
+        // ThreeJS Background
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
-        const material = new THREE.MeshNormalMaterial({ wireframe: true, opacity: 0.2, transparent: true });
-        const mesh = new THREE.Mesh(geometry, material);
+        const mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshNormalMaterial({ wireframe: true, opacity: 0.1, transparent: true }));
         scene.add(mesh); camera.position.z = 30;
         function animate() { requestAnimationFrame(animate); mesh.rotation.x += 0.001; mesh.rotation.y += 0.002; renderer.render(scene, camera); }
         animate();
