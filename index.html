@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster Pro - Advanced Task Management</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Smooth transitions for drag and drop */
+        .task-card { transition: transform 0.2s, box-shadow 0.2s; cursor: grab; }
+        .task-card:active { cursor: grabbing; transform: scale(1.02); }
+        .ghost { opacity: 0.5; background: #c8ebfb; border: 2px dashed #3b82f6; }
+        
+        /* Glassmorphism Logic */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        /* Hide Scrollbar for cleaner UI */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-x-hidden">
+
+    <div id="landing-page" class="relative w-full h-screen flex items-center justify-center overflow-hidden bg-black text-white">
+        <canvas id="bg-canvas" class="absolute top-0 left-0 w-full h-full z-0"></canvas>
+        <div class="z-10 text-center px-4">
+            <h1 class="text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">TaskMaster Pro</h1>
+            <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">The ultimate command center for your productivity. Manage tasks, visualize progress, and dominate your workflow.</p>
+            <button onclick="enterApp()" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-full font-bold text-lg transition shadow-lg shadow-blue-500/50 transform hover:-translate-y-1">
+                Launch Dashboard <i class="fas fa-rocket ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="app-dashboard" class="hidden flex h-screen">
+        
+        <aside class="w-64 bg-slate-900 text-white flex-col hidden md:flex shadow-2xl z-20">
+            <div class="p-6 text-2xl font-bold tracking-wider text-blue-400">TMP <span class="text-xs text-gray-500">v1.0</span></div>
+            <nav class="flex-1 px-4 space-y-2 mt-4">
+                <a href="#" onclick="showSection('board')" class="flex items-center gap-3 px-4 py-3 bg-blue-600 rounded-lg text-white shadow-md transition">
+                    <i class="fas fa-columns"></i> Kanban Board
+                </a>
+                <a href="#" onclick="showSection('analytics')" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-lg text-gray-300 transition">
+                    <i class="fas fa-chart-pie"></i> Analytics
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-lg text-gray-300 transition">
+                    <i class="fas fa-folder"></i> Projects
+                </a>
+            </nav>
+            <div class="p-4 border-t border-slate-800">
+                <div class="flex items-center gap-3">
+                    <img src="https://ui-avatars.com/api/?name=User&background=random" class="w-10 h-10 rounded-full">
+                    <div>
+                        <p class="text-sm font-semibold">Dev Machan</p>
+                        <p class="text-xs text-gray-400">Admin</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            
+            <header class="h-16 glass border-b border-slate-200 flex items-center justify-between px-6 z-10">
+                <h2 id="page-title" class="text-xl font-bold text-slate-700">Kanban Board</h2>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-md">
+                        <i class="fas fa-plus mr-1"></i> New Task
+                    </button>
+                    <button class="text-gray-500 hover:text-blue-600 relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">3</span>
+                    </button>
+                </div>
+            </header>
+
+            <div id="section-board" class="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-slate-100">
+                <div class="flex h-full gap-6 min-w-[1000px]">
+                    
+                    <div class="flex-1 flex flex-col bg-slate-200/50 rounded-xl border border-slate-200 h-full max-h-full">
+                        <div class="p-4 flex justify-between items-center border-b border-slate-300/50">
+                            <h3 class="font-bold text-slate-600 uppercase text-sm tracking-wider"><i class="fas fa-circle text-gray-400 mr-2"></i>To Do <span id="count-todo" class="bg-slate-300 px-2 rounded-full text-xs ml-2">0</span></h3>
+                        </div>
+                        <div id="todo-list" class="flex-1 p-3 overflow-y-auto space-y-3 kanban-col" data-status="todo">
+                            </div>
+                    </div>
+
+                    <div class="flex-1 flex flex-col bg-blue-50/50 rounded-xl border border-blue-100 h-full max-h-full">
+                        <div class="p-4 flex justify-between items-center border-b border-blue-200/50">
+                            <h3 class="font-bold text-blue-600 uppercase text-sm tracking-wider"><i class="fas fa-circle text-blue-400 mr-2"></i>In Progress <span id="count-doing" class="bg-blue-200 text-blue-800 px-2 rounded-full text-xs ml-2">0</span></h3>
+                        </div>
+                        <div id="doing-list" class="flex-1 p-3 overflow-y-auto space-y-3 kanban-col" data-status="doing">
+                            </div>
+                    </div>
+
+                    <div class="flex-1 flex flex-col bg-green-50/50 rounded-xl border border-green-100 h-full max-h-full">
+                        <div class="p-4 flex justify-between items-center border-b border-green-200/50">
+                            <h3 class="font-bold text-green-600 uppercase text-sm tracking-wider"><i class="fas fa-check-circle text-green-500 mr-2"></i>Done <span id="count-done" class="bg-green-200 text-green-800 px-2 rounded-full text-xs ml-2">0</span></h3>
+                        </div>
+                        <div id="done-list" class="flex-1 p-3 overflow-y-auto space-y-3 kanban-col" data-status="done">
+                            </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="section-analytics" class="hidden flex-1 p-8 overflow-y-auto bg-slate-50">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100">
+                        <h3 class="text-lg font-bold mb-4 text-slate-700">Task Completion Rate</h3>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-100 flex flex-col justify-center items-center text-center">
+                        <div class="text-6xl font-bold text-blue-600 mb-2">85%</div>
+                        <p class="text-gray-500">Productivity Score</p>
+                        <p class="text-sm text-green-500 mt-4"><i class="fas fa-arrow-up"></i> 12% increase from last week</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="task-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-800">Create New Task</h3>
+                <button onclick="toggleModal()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                    <input type="text" id="input-title" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="e.g. Fix Login Bug">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <select id="input-priority" class="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none">
+                        <option value="High">High Priority</option>
+                        <option value="Medium" selected>Medium Priority</option>
+                        <option value="Low">Low Priority</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                    <div class="flex gap-2">
+                        <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold cursor-pointer border border-purple-200">Design</span>
+                        <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold cursor-pointer border border-orange-200">Dev</span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+                <button onclick="toggleModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium">Cancel</button>
+                <button onclick="addTask()" class="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30">Create Task</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- 1. THREE.JS BACKGROUND ANIMATION ---
+        const initThreeJS = () => {
+            const canvas = document.getElementById('bg-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.position.z = 30;
+
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 700;
+            const posArray = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 60; // Spread particles
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const material = new THREE.PointsMaterial({ size: 0.15, color: 0x3b82f6 });
+            const particlesMesh = new THREE.Points(particlesGeometry, material);
+            scene.add(particlesMesh);
+
+            // Add connecting lines (complex feel)
+            const linesMaterial = new THREE.LineBasicMaterial({ color: 0x3b82f6, opacity: 0.2, transparent: true });
+            const linesMesh = new THREE.LineSegments(particlesGeometry, linesMaterial);
+            scene.add(linesMesh);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                particlesMesh.rotation.y += 0.002;
+                particlesMesh.rotation.x += 0.001;
+                linesMesh.rotation.y += 0.002;
+                linesMesh.rotation.x += 0.001;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+        initThreeJS();
+
+        // --- 2. APP LOGIC ---
+        
+        // Data Store (LocalStorage Mock)
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [
+            { id: 1, title: 'Design Database Schema', priority: 'High', status: 'todo', date: 'Oct 24' },
+            { id: 2, title: 'Setup Tailwind Project', priority: 'Medium', status: 'doing', date: 'Oct 25' },
+            { id: 3, title: 'Client Meeting', priority: 'Low', status: 'done', date: 'Oct 20' }
+        ];
+
+        // Functions
+        function enterApp() {
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('app-dashboard').classList.remove('hidden');
+            renderTasks();
+            initCharts();
+        }
+
+        function showSection(section) {
+            document.getElementById('section-board').classList.add('hidden');
+            document.getElementById('section-analytics').classList.add('hidden');
+            document.getElementById(`section-${section}`).classList.remove('hidden');
+            
+            document.getElementById('page-title').innerText = section === 'board' ? 'Kanban Board' : 'Analytics Overview';
+        }
+
+        function toggleModal() {
+            const modal = document.getElementById('task-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function generateCardHTML(task) {
+            const priorityColors = {
+                'High': 'bg-red-100 text-red-700 border-red-200',
+                'Medium': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                'Low': 'bg-green-100 text-green-700 border-green-200'
+            };
+            
+            return `
+                <div class="task-card bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:shadow-md relative group" data-id="${task.id}">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold px-2 py-1 rounded border ${priorityColors[task.priority]}">${task.priority}</span>
+                        <button onclick="deleteTask(${task.id})" class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <h4 class="font-semibold text-slate-700 mb-3">${task.title}</h4>
+                    <div class="flex justify-between items-center text-xs text-gray-400 mt-2 border-t pt-2 border-slate-100">
+                        <span><i class="far fa-clock mr-1"></i> ${task.date}</span>
+                        <div class="flex -space-x-2">
+                            <img class="w-6 h-6 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name=D+M&background=0D8ABC&color=fff">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTasks() {
+            const columns = { todo: document.getElementById('todo-list'), doing: document.getElementById('doing-list'), done: document.getElementById('done-list') };
+            const counts = { todo: 0, doing: 0, done: 0 };
+            
+            // Clear current lists
+            Object.values(columns).forEach(col => col.innerHTML = '');
+
+            tasks.forEach(task => {
+                if (columns[task.status]) {
+                    columns[task.status].innerHTML += generateCardHTML(task);
+                    counts[task.status]++;
+                }
+            });
+
+            // Update Counts
+            document.getElementById('count-todo').innerText = counts.todo;
+            document.getElementById('count-doing').innerText = counts.doing;
+            document.getElementById('count-done').innerText = counts.done;
+
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            updateChart();
+        }
+
+        function addTask() {
+            const title = document.getElementById('input-title').value;
+            const priority = document.getElementById('input-priority').value;
+            
+            if(!title) return alert("Please enter a title");
+
+            const newTask = {
+                id: Date.now(),
+                title: title,
+                priority: priority,
+                status: 'todo',
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            };
+
+            tasks.push(newTask);
+            renderTasks();
+            toggleModal();
+            document.getElementById('input-title').value = '';
+        }
+
+        function deleteTask(id) {
+            if(confirm('Are you sure?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                renderTasks();
+            }
+        }
+
+        // --- 3. DRAG AND DROP (SortableJS) ---
+        ['todo-list', 'doing-list', 'done-list'].forEach(id => {
+            new Sortable(document.getElementById(id), {
+                group: 'kanban', // Allows dragging between lists
+                animation: 150,
+                ghostClass: 'ghost',
+                delay: 100, // Slight delay to prevent accidental drags on touch
+                delayOnTouchOnly: true,
+                onEnd: function (evt) {
+                    const itemEl = evt.item;
+                    const newStatus = evt.to.getAttribute('data-status');
+                    const taskId = parseInt(itemEl.getAttribute('data-id'));
+
+                    // Update data model
+                    const taskIndex = tasks.findIndex(t => t.id === taskId);
+                    if(taskIndex > -1) {
+                        tasks[taskIndex].status = newStatus;
+                        renderTasks(); // Re-render to update counts and save
+                    }
+                }
+            });
+        });
+
+        // --- 4. ANALYTICS CHART ---
+        let statusChart;
+        function initCharts() {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['To Do', 'In Progress', 'Done'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#e2e8f0', '#3b82f6', '#22c55e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+            updateChart();
+        }
+
+        function updateChart() {
+            if(!statusChart) return;
+            const counts = [
+                tasks.filter(t => t.status === 'todo').length,
+                tasks.filter(t => t.status === 'doing').length,
+                tasks.filter(t => t.status === 'done').length
+            ];
+            statusChart.data.datasets[0].data = counts;
+            statusChart.update();
+        }
+
+    </script>
+</body>
+</html>

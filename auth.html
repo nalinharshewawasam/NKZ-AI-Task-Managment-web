@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster Pro v2.0 - Advanced System</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Drawer Slide Animation */
+        .drawer { 
+            transform: translateX(100%); 
+            transition: transform 0.3s ease-in-out; 
+        }
+        .drawer.open { 
+            transform: translateX(0); 
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* Drag & Drop Visuals */
+        .task-card:active { cursor: grabbing; transform: scale(1.02); }
+        .ghost { opacity: 0.5; background: #e0f2fe; border: 2px dashed #3b82f6; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-hidden h-screen flex">
+
+    <aside class="w-20 md:w-64 bg-slate-900 text-white flex-col flex shadow-2xl z-20 transition-all duration-300">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold">TM</div>
+            <span class="text-xl font-bold tracking-wider hidden md:block">TaskMaster</span>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <button onclick="switchView('board')" id="nav-board" class="w-full flex items-center gap-4 px-4 py-3 bg-blue-600 rounded-xl text-white shadow-lg transition-all">
+                <i class="fas fa-columns text-lg"></i> <span class="hidden md:block">Board View</span>
+            </button>
+            <button onclick="switchView('analytics')" id="nav-analytics" class="w-full flex items-center gap-4 px-4 py-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all">
+                <i class="fas fa-chart-line text-lg"></i> <span class="hidden md:block">Analytics</span>
+            </button>
+            <button class="w-full flex items-center gap-4 px-4 py-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all">
+                <i class="fas fa-folder text-lg"></i> <span class="hidden md:block">Projects</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800 mt-auto">
+            <div class="flex items-center gap-3 cursor-pointer hover:bg-slate-800 p-2 rounded-lg transition">
+                <img src="https://ui-avatars.com/api/?name=User&background=random" class="w-10 h-10 rounded-full border-2 border-slate-700">
+                <div class="hidden md:block">
+                    <p class="text-sm font-semibold">Dev Machan</p>
+                    <p class="text-xs text-gray-500">Pro Member</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        
+        <header class="h-16 glass flex items-center justify-between px-8 z-10 shrink-0">
+            <div>
+                <h2 id="page-title" class="text-2xl font-bold text-slate-800">My Workspace</h2>
+                <p class="text-xs text-slate-500">Manage your tasks effectively</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-0.5">
+                    <i class="fas fa-plus mr-2"></i>New Task
+                </button>
+            </div>
+        </header>
+
+        <div id="view-board" class="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-slate-100">
+            <div class="flex h-full gap-6 min-w-[1000px]">
+                
+                <div class="flex-1 flex flex-col bg-slate-200 rounded-2xl h-full shadow-inner">
+                    <div class="p-4 flex justify-between items-center text-slate-600 font-bold border-b border-slate-300 mx-2">
+                        <span>TO DO</span>
+                        <span id="count-todo" class="bg-white px-2 py-0.5 rounded-md text-xs shadow-sm">0</span>
+                    </div>
+                    <div id="col-todo" class="flex-1 p-3 overflow-y-auto space-y-3" data-status="todo">
+                        </div>
+                </div>
+
+                <div class="flex-1 flex flex-col bg-blue-50 rounded-2xl h-full shadow-inner border border-blue-100">
+                    <div class="p-4 flex justify-between items-center text-blue-600 font-bold border-b border-blue-200 mx-2">
+                        <span>IN PROGRESS</span>
+                        <span id="count-doing" class="bg-white px-2 py-0.5 rounded-md text-xs shadow-sm">0</span>
+                    </div>
+                    <div id="col-doing" class="flex-1 p-3 overflow-y-auto space-y-3" data-status="doing"></div>
+                </div>
+
+                <div class="flex-1 flex flex-col bg-green-50 rounded-2xl h-full shadow-inner border border-green-100">
+                    <div class="p-4 flex justify-between items-center text-green-600 font-bold border-b border-green-200 mx-2">
+                        <span>DONE</span>
+                        <span id="count-done" class="bg-white px-2 py-0.5 rounded-md text-xs shadow-sm">0</span>
+                    </div>
+                    <div id="col-done" class="flex-1 p-3 overflow-y-auto space-y-3" data-status="done"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="view-analytics" class="hidden flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-6xl mx-auto space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-slate-500 text-sm">Total Tasks</p>
+                        <h3 class="text-3xl font-bold text-slate-800" id="stat-total">0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-slate-500 text-sm">Completed</p>
+                        <h3 class="text-3xl font-bold text-green-600" id="stat-completed">0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-slate-500 text-sm">Pending</p>
+                        <h3 class="text-3xl font-bold text-orange-500" id="stat-pending">0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-slate-500 text-sm">Efficiency</p>
+                        <h3 class="text-3xl font-bold text-blue-600">87%</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
+                        <h4 class="font-bold text-slate-700 mb-6">Task Distribution</h4>
+                        <canvas id="doughnutChart"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100">
+                        <h4 class="font-bold text-slate-700 mb-6">Productivity (Last 7 Days)</h4>
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="task-drawer" class="drawer fixed inset-y-0 right-0 w-full md:w-[500px] bg-white shadow-2xl z-50 flex flex-col border-l border-slate-200">
+        
+        <div class="h-16 border-b border-slate-100 flex items-center justify-between px-6 bg-slate-50">
+            <div class="flex items-center gap-2">
+                <span id="drawer-priority" class="px-2 py-1 text-xs font-bold rounded bg-red-100 text-red-600">HIGH</span>
+                <span class="text-xs text-gray-400">ID: #<span id="drawer-id"></span></span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeDrawer()" class="text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            
+            <div>
+                <input type="text" id="drawer-title" class="w-full text-2xl font-bold text-slate-800 border-none focus:ring-0 placeholder-gray-300 p-0" placeholder="Task Title">
+                <textarea id="drawer-desc" rows="3" class="w-full mt-2 text-slate-600 text-sm border-none focus:ring-0 resize-none p-0" placeholder="Add a more detailed description..."></textarea>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fas fa-check-double mr-2"></i>Sub-tasks</h4>
+                    <span id="subtask-progress" class="text-xs text-slate-500">0/0</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mb-4">
+                    <div id="progress-bar-fill" class="bg-blue-600 h-1.5 rounded-full" style="width: 0%"></div>
+                </div>
+                
+                <div id="subtask-list" class="space-y-2 mb-3">
+                    </div>
+                
+                <div class="flex gap-2">
+                    <input type="text" id="new-subtask-input" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" placeholder="Add new step...">
+                    <button onclick="addSubtask()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 rounded-lg text-sm font-medium"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-sm font-bold text-slate-700 uppercase mb-3"><i class="fas fa-paperclip mr-2"></i>Attachments</h4>
+                <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition cursor-pointer group">
+                    <i class="fas fa-cloud-upload-alt text-3xl text-slate-300 group-hover:text-blue-500 mb-2 transition"></i>
+                    <p class="text-xs text-slate-500">Drag files here or click to upload</p>
+                </div>
+                <div class="mt-4 flex items-center gap-3 p-3 border border-slate-100 rounded-lg bg-slate-50">
+                    <div class="w-10 h-10 bg-red-100 text-red-500 rounded flex items-center justify-center"><i class="fas fa-file-pdf"></i></div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-700">Project_Specs.pdf</p>
+                        <p class="text-xs text-slate-400">2.4 MB</p>
+                    </div>
+                    <button class="text-slate-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="p-4 border-t border-slate-100 bg-slate-50">
+            <button onclick="saveDrawerChanges()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition">Save Changes</button>
+        </div>
+    </div>
+
+    <div id="drawer-overlay" onclick="closeDrawer()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden transition-opacity"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script>
+        // --- DATA MANAGEMENT ---
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [
+            { 
+                id: 101, title: 'Database Design', priority: 'High', status: 'todo', desc: 'Create ERD for User and Task tables',
+                subtasks: [ { text: 'Define User Table', done: true }, { text: 'Define Task Table', done: false } ]
+            },
+            { 
+                id: 102, title: 'Frontend Layout', priority: 'Medium', status: 'doing', desc: 'Implement Sidebar and Header using Tailwind',
+                subtasks: [] 
+            },
+            { 
+                id: 103, title: 'Setup Node.js', priority: 'Low', status: 'done', desc: 'Init Express server',
+                subtasks: [ { text: 'Install dependencies', done: true } ]
+            }
+        ];
+        
+        let currentTaskId = null; // To track which task is open in drawer
+
+        // --- INIT & NAVIGATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBoard();
+            initDragAndDrop();
+        });
+
+        function switchView(viewName) {
+            // Hide all views
+            document.getElementById('view-board').classList.add('hidden');
+            document.getElementById('view-analytics').classList.add('hidden');
+            
+            // Reset Nav Styles
+            document.getElementById('nav-board').classList.replace('bg-blue-600', 'hover:bg-slate-800');
+            document.getElementById('nav-board').classList.replace('text-white', 'text-slate-400');
+            document.getElementById('nav-analytics').classList.replace('bg-blue-600', 'hover:bg-slate-800');
+            document.getElementById('nav-analytics').classList.replace('text-white', 'text-slate-400');
+
+            // Show selected view & Highlight Nav
+            if(viewName === 'board') {
+                document.getElementById('view-board').classList.remove('hidden');
+                document.getElementById('nav-board').classList.replace('hover:bg-slate-800', 'bg-blue-600');
+                document.getElementById('nav-board').classList.replace('text-slate-400', 'text-white');
+                document.getElementById('page-title').innerText = "Kanban Board";
+            } else {
+                document.getElementById('view-analytics').classList.remove('hidden');
+                document.getElementById('nav-analytics').classList.replace('hover:bg-slate-800', 'bg-blue-600');
+                document.getElementById('nav-analytics').classList.replace('text-slate-400', 'text-white');
+                document.getElementById('page-title').innerText = "Analytics & Insights";
+                renderCharts(); // Load charts when view is opened
+            }
+        }
+
+        // --- KANBAN BOARD LOGIC ---
+        function renderBoard() {
+            const columns = { todo: document.getElementById('col-todo'), doing: document.getElementById('col-doing'), done: document.getElementById('col-done') };
+            const counts = { todo: 0, doing: 0, done: 0 };
+            
+            Object.values(columns).forEach(col => col.innerHTML = '');
+
+            tasks.forEach(task => {
+                if (columns[task.status]) {
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md cursor-pointer transition relative group task-card";
+                    card.setAttribute('data-id', task.id);
+                    card.onclick = (e) => {
+                        if(!e.target.closest('.delete-btn')) openDrawer(task.id);
+                    };
+
+                    const priorityClass = task
