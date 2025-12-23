@@ -1,341 +1,611 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NKZ ULTIMATE | Pro Workspace</title>
+
+    <title>NKZ Ultimate | Pro Workspace</title>
+
     
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+
         
-        :root { 
-            --bg-main: #f0f4f8; 
-            --sidebar-bg: #0f172a; 
-            --glass-white: rgba(255, 255, 255, 0.7);
-        }
-        .dark-mode { 
-            --bg-main: #020617; 
-            --sidebar-bg: #020617; 
-            --glass-white: rgba(30, 41, 59, 0.6);
-        }
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); transition: 0.5s; overflow: hidden; }
+        :root { --bg-main: #f8fafc; --text-main: #0f172a; --card-bg: rgba(255, 255, 255, 0.7); }
+
+        .dark-mode { --bg-main: #0f172a; --text-main: #f8fafc; --card-bg: rgba(30, 41, 59, 0.7); }
+
+
+
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); transition: 0.3s; overflow-x: hidden; }
+
         
-        /* Glass Panels */
-        .glass-panel { background: var(--glass-white); backdrop-filter: blur(20px); border-radius: 2rem; border: 1px solid rgba(255, 255, 255, 0.3); }
 
-        .sidebar { background: var(--sidebar-bg); width: 280px; z-index: 100; color: white; transition: 0.3s; }
-        
-        /* Calendar UI */
-        .cal-box { background: rgba(255,255,255,0.03); border-radius: 1.5rem; padding: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        .cal-day { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 8px; color: #64748b; transition: 0.3s; cursor: pointer; }
-        .cal-day:hover { background: rgba(255,255,255,0.1); color: white; }
-        .cal-day.active { background: #3b82f6; color: white; font-weight: 800; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
-        .cal-day.has-task { position: relative; }
-        .cal-day.has-task::after { content: ''; position: absolute; bottom: 3px; width: 3px; height: 3px; background: #3b82f6; border-radius: 50%; }
+        .glass-card { backdrop-filter: blur(15px); border-radius: 1.5rem; transition: 0.3s; cursor: grab; background: var(--card-bg); border: 1px solid rgba(148, 163, 184, 0.1); }
 
-        /* Task Cards */
-        .task-card { 
-            background: white; border-radius: 1.5rem; padding: 1.25rem; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.03);
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: grab;
-        }
-        .task-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
-        .dark-mode .task-card { background: #1e293b; color: white; border-color: rgba(255,255,255,0.05); }
+        .glass-card:active { cursor: grabbing; transform: scale(1.02); }
 
-        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.4; }
-        .custom-scroll::-webkit-scrollbar { width: 0px; }
+
+
+        /* Status Colors */
+
+        .border-todo { border-left: 5px solid #94a3b8; }
+
+        .border-doing { border-left: 5px solid #3b82f6; }
+
+        .border-done { border-left: 5px solid #10b981; }
+
+        .border-overdue { border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05); }
+
+
+
+        .sidebar { background: #0f172a; color: white; width: 260px; z-index: 50; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.3; }
+
+
+
+        .search-bar { transition: 0.3s; border: 1px solid rgba(148, 163, 184, 0.2); }
+
+        .search-bar:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+
+
+
+        .p-high { background: #ef4444; color: white; }
+
+        .p-medium { background: #f59e0b; color: white; }
+
+        .p-low { background: #10b981; color: white; }
+
     </style>
+
 </head>
-<body class="flex h-screen">
+
+<body class="flex flex-col md:flex-row h-screen">
+
+
 
     <canvas id="bg-canvas"></canvas>
 
-    <aside class="sidebar flex flex-col p-6 overflow-y-auto custom-scroll">
-        <div class="flex items-center gap-3 mb-8">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-rocket"></i></div>
-            <h1 class="text-lg font-black tracking-tight">NKZ STUDIO</h1>
-        </div>
 
-        <div class="bg-white/5 p-4 rounded-2xl mb-8 flex items-center gap-3 border border-white/5">
-            <div id="user-initial" class="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center font-bold">U</div>
-            <div class="overflow-hidden">
-                <p id="user-name" class="text-xs font-black truncate">User</p>
-                <p class="text-[9px] text-slate-500 font-bold uppercase">Pro Member</p>
-            </div>
-        </div>
 
-        <div class="cal-box mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <span id="monthDisplay" class="text-[9px] font-black uppercase tracking-widest text-blue-400">Month</span>
-                <div class="flex gap-2">
-                    <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left text-[8px]"></i></button>
-                    <button onclick="changeMonth(1)"><i class="fas fa-chevron-right text-[8px]"></i></button>
-                </div>
-            </div>
-            <div class="grid grid-cols-7 gap-1 text-center mb-2 opacity-20 text-[8px] font-bold">
-                <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
-            </div>
-            <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
-        </div>
+    <div id="taskModal" class="modal">
 
-        <nav class="flex-1 space-y-2">
-            <button onclick="showView('dashboard')" id="nav-dash" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-blue-600 font-bold text-sm shadow-lg shadow-blue-600/20"><i class="fas fa-th-large"></i> Dashboard</button>
-            <button onclick="showView('analytics')" id="nav-anal" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-400 hover:bg-white/5 font-bold text-sm transition-all"><i class="fas fa-chart-line"></i> Analytics</button>
-            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-400 hover:bg-white/5 font-bold text-sm transition-all"><i class="fas fa-moon"></i> Dark Mode</button>
-        </nav>
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] w-[95%] max-w-md shadow-2xl">
 
-        <button onclick="signOutUser()" class="mt-8 text-slate-500 hover:text-rose-400 text-xs font-bold transition-colors text-left px-5"><i class="fas fa-power-off mr-3"></i> Log Out</button>
-    </aside>
+            <h3 class="text-2xl font-black mb-6">New Mission</h3>
 
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-                <h2 id="view-title" class="text-3xl font-black tracking-tight dark:text-white">Workspace</h2>
-                <p id="live-date" class="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-1"></p>
-            </div>
-            <div class="flex items-center gap-4 w-full md:w-auto">
-                <div class="relative flex-1 md:w-64">
-                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search..." class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 rounded-2xl outline-none text-sm border border-transparent focus:border-blue-500 transition-all dark:text-white">
-                </div>
-                <button onclick="openModal()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg hover:scale-105 transition-all text-sm">+ NEW</button>
-            </div>
-        </header>
-
-        <div id="dashboard-view" class="flex-1 overflow-x-auto p-10 pt-0 custom-scroll">
-            <div class="flex gap-6 h-full min-w-[1200px]">
-                <div class="flex-1 flex flex-col">
-                    <h3 class="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-4">Pending <span id="count-todo">0</span></h3>
-                    <div id="col-todo" class="column-container space-y-4 flex-1" data-status="todo"></div>
-                </div>
-                <div class="flex-1 flex flex-col">
-                    <h3 class="flex justify-between text-[10px] font-black text-blue-500 uppercase tracking-widest px-2 mb-4">In Progress <span id="count-doing">0</span></h3>
-                    <div id="col-doing" class="column-container space-y-4 flex-1" data-status="doing"></div>
-                </div>
-                <div class="flex-1 flex flex-col">
-                    <h3 class="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-widest px-2 mb-4">Completed <span id="count-done">0</span></h3>
-                    <div id="col-done" class="column-container space-y-4 flex-1" data-status="done"></div>
-                </div>
-                <div class="flex-1 flex flex-col">
-                    <h3 class="flex justify-between text-[10px] font-black text-rose-500 uppercase tracking-widest px-2 mb-4">Overdue <span id="count-overdue">0</span></h3>
-                    <div id="col-overdue" class="column-container space-y-4 flex-1" data-status="overdue"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="analytics-view" class="hidden flex-1 overflow-y-auto p-10 custom-scroll">
-            <div class="max-w-5xl mx-auto space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="glass-panel p-8 bg-blue-600 !text-white">
-                        <p class="text-[10px] font-black opacity-60 uppercase">Efficiency Rate</p>
-                        <h4 id="stat-efficiency" class="text-5xl font-black mt-2">0%</h4>
-                    </div>
-                    <div class="glass-panel p-8">
-                        <p class="text-[10px] font-black text-slate-400 uppercase">Success Task</p>
-                        <h4 id="stat-done" class="text-5xl font-black mt-2 dark:text-white">0</h4>
-                    </div>
-                    <div class="glass-panel p-8 bg-slate-900 !text-white">
-                        <p class="text-[10px] font-black opacity-60 uppercase">Total Missions</p>
-                        <h4 id="stat-total" class="text-5xl font-black mt-2">0</h4>
-                    </div>
-                </div>
-                <div class="glass-panel p-10">
-                    <canvas id="mainChart" class="max-h-[350px]"></canvas>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <div id="taskModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[1000] hidden items-center justify-center p-6">
-        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl">
-            <h3 class="text-2xl font-black mb-6 dark:text-white">New Task</h3>
             <div class="space-y-4">
-                <input type="text" id="taskTitle" placeholder="What's the mission?" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 ring-blue-500 dark:text-white">
+
+                <input type="text" id="taskTitle" placeholder="What needs to be done?" class="w-full p-4 bg-slate-50 dark:bg-slate-700 border-none rounded-2xl outline-blue-500">
+
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="date" id="taskDate" class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl dark:text-white">
-                    <select id="taskPriority" class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl dark:text-white">
+
+                    <input type="date" id="taskDate" class="p-4 bg-slate-50 dark:bg-slate-700 border-none rounded-2xl outline-blue-500 text-sm">
+
+                    <select id="taskPriority" class="p-4 bg-slate-50 dark:bg-slate-700 border-none rounded-2xl outline-blue-500 text-sm">
+
                         <option value="high">🔥 High</option>
+
                         <option value="medium" selected>⚡ Medium</option>
-                        <option value="low">🌱 Low</option>
+
+                        <option value="low">🍃 Low</option>
+
                     </select>
+
                 </div>
-                <div class="flex gap-4 mt-6">
-                    <button onclick="closeModal()" class="flex-1 font-bold text-slate-400">Cancel</button>
-                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl">Save Task</button>
+
+                <div class="flex gap-4 mt-8">
+
+                    <button onclick="closeModal()" class="flex-1 py-4 text-slate-400 font-bold">Cancel</button>
+
+                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-700">Deploy Task</button>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyDd6T85SZAc9eh0Kv2BjaKg4GKHP659bgY", authDomain: "nkz-task-management.firebaseapp.com", projectId: "nkz-task-management", storageBucket: "nkz-task-management.firebasestorage.app", messagingSenderId: "880985174490", appId: "1:880985174490:web:9080e073b462e3201410e3" };
+
+    <aside class="sidebar p-6 hidden md:flex flex-col h-full shadow-2xl">
+
+        <div class="flex items-center gap-3 mb-10">
+
+            <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-rocket text-white"></i></div>
+
+            <span class="text-xl font-black tracking-tighter">NKZ STUDIO</span>
+
+        </div>
+
+
+
+        <div class="bg-white/5 p-4 rounded-3xl mb-8 border border-white/10 flex items-center gap-3">
+
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-lg" id="user-initials">N</div>
+
+            <div>
+
+                <p class="text-xs font-bold text-slate-400">Welcome back,</p>
+
+                <p class="text-sm font-black truncate w-24" id="user-display-name">Nalin H.</p>
+
+            </div>
+
+        </div>
+
+
+
+        <nav class="flex-1 space-y-2">
+
+            <button onclick="showView('dashboard')" id="btn-dash" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold transition-all"><i class="fas fa-layer-group"></i> Dashboard</button>
+
+            <button onclick="showView('analytics')" id="btn-anal" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5 transition-all"><i class="fas fa-chart-pie"></i> Analytics</button>
+
+            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5 transition-all"><i class="fas fa-moon"></i> Dark Mode</button>
+
+        </nav>
+
+
+
+        <button id="logout-btn" class="mt-auto flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 font-bold transition-colors"><i class="fas fa-power-off"></i> Sign Out</button>
+
+    </aside>
+
+
+
+    <main class="flex-1 overflow-y-auto p-6 md:p-10">
+
+        
+
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+
+            <div class="relative w-full md:w-96 group">
+
+                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                <input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search your tasks..." class="search-bar w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium shadow-sm">
+
+            </div>
+
+            
+
+            <div class="flex items-center gap-4">
+
+                <div class="hidden md:block text-right">
+
+                    <p id="current-date" class="text-xs font-black text-blue-500 uppercase tracking-widest"></p>
+
+                    <p class="text-slate-400 text-[10px] font-bold">Have a productive day!</p>
+
+                </div>
+
+                <button onclick="addTask()" class="bg-slate-900 dark:bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:scale-105 transition-transform">+ NEW TASK</button>
+
+            </div>
+
+        </div>
+
+
+
+        <div id="dashboard-view">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+
+                <div class="space-y-5">
+
+                    <h3 class="flex justify-between items-center font-black text-slate-400 text-[10px] uppercase tracking-[0.2em] px-2"><span>Pending</span><span id="count-todo" class="bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md">0</span></h3>
+
+                    <div id="col-todo" class="column-container space-y-4" data-status="todo"></div>
+
+                </div>
+
+                <div class="space-y-5">
+
+                    <h3 class="flex justify-between items-center font-black text-blue-500 text-[10px] uppercase tracking-[0.2em] px-2"><span>In Progress</span><span id="count-doing" class="bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-md">0</span></h3>
+
+                    <div id="col-doing" class="column-container space-y-4" data-status="doing"></div>
+
+                </div>
+
+                <div class="space-y-5">
+
+                    <h3 class="flex justify-between items-center font-black text-emerald-500 text-[10px] uppercase tracking-[0.2em] px-2"><span>Completed</span><span id="count-done" class="bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md">0</span></h3>
+
+                    <div id="col-done" class="column-container space-y-4" data-status="done"></div>
+
+                </div>
+
+                <div class="space-y-5">
+
+                    <h3 class="flex justify-between items-center font-black text-rose-500 text-[10px] uppercase tracking-[0.2em] px-2"><span>Overdue</span><span id="count-overdue" class="bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-md">0</span></h3>
+
+                    <div id="col-overdue" class="column-container space-y-4" data-status="overdue"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div id="analytics-view" class="hidden">
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm">
+
+                    <canvas id="statusChart" class="max-h-80"></canvas>
+
+                </div>
+
+                <div class="space-y-6">
+
+                    <div class="bg-blue-600 p-8 rounded-[2.5rem] text-white shadow-lg shadow-blue-500/20">
+
+                        <p class="text-xs font-bold opacity-70">Efficiency Rate</p>
+
+                        <h2 id="efficiency-stat" class="text-5xl font-black mt-2">0%</h2>
+
+                    </div>
+
+                    <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white">
+
+                        <p class="text-xs font-bold opacity-70">Focus Time</p>
+
+                        <h2 class="text-4xl font-black mt-2">2.4h <span class="text-sm opacity-50">/ day</span></h2>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+
+    <script type="module">
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+
+
+        const firebaseConfig = {
+
+            apiKey: "AIzaSyDd6T85SZAc9eh0Kv2BjaKg4GKHP659bgY",
+
+            authDomain: "nkz-task-management.firebaseapp.com",
+
+            projectId: "nkz-task-management",
+
+            storageBucket: "nkz-task-management.firebasestorage.app",
+
+            messagingSenderId: "880985174490",
+
+            appId: "1:880985174490:web:9080e073b462e3201410e3"
+
+        };
+
+
+
         const app = initializeApp(firebaseConfig);
+
         const auth = getAuth(app);
+
         const db = getFirestore(app);
 
         let currentUser = null;
-        let tasks = [];
-        let chart = null;
-        let currentMonth = new Date();
+
+        let statusChart = null;
+
+
 
         onAuthStateChanged(auth, (user) => {
+
             if (user) { 
+
                 currentUser = user; 
-                document.getElementById('user-name').innerText = user.email.split('@')[0];
-                document.getElementById('user-initial').innerText = user.email.charAt(0).toUpperCase();
-                initApp();
+
+                document.getElementById('user-display-name').innerText = user.email.split('@')[0];
+
+                document.getElementById('user-initials').innerText = user.email.charAt(0).toUpperCase();
+
+                listenForTasks(); 
+
+                initSortable();
+
             } else { window.location.href = 'login.html'; }
+
         });
 
-        function initApp() {
-            renderCalendar();
-            listenTasks();
-            initSortable();
-            document.getElementById('live-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-        }
 
-        // Calendar Logic
-        window.changeMonth = (dir) => { currentMonth.setMonth(currentMonth.getMonth() + dir); renderCalendar(); };
-        function renderCalendar() {
-            const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
-            document.getElementById('monthDisplay').innerText = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
-            const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-            const today = new Date();
-            for(let i=1; i<=daysInMonth; i++) {
-                const day = document.createElement('div');
-                day.className = 'cal-day';
-                if(i === today.getDate() && currentMonth.getMonth() === today.getMonth()) day.classList.add('active');
-                const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                if(tasks.some(t => t.dueDate === dateStr)) day.classList.add('has-task');
-                day.innerText = i; grid.appendChild(day);
-            }
-        }
 
-        // Firestore Logic
-        function listenTasks() {
-            onSnapshot(query(collection(db, "tasks"), where("userId", "==", currentUser.uid)), (snap) => {
-                tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                renderTasks();
-            });
-        }
+        // Toggle Views
 
-        function renderTasks() {
-            const cols = { todo: 'col-todo', doing: 'col-doing', done: 'col-done', overdue: 'col-overdue' };
-            Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
-            let counts = { todo: 0, doing: 0, done: 0, overdue: 0 };
-            const today = new Date().toISOString().split('T')[0];
-
-            tasks.forEach(task => {
-                let status = task.status;
-                if(status !== 'done' && task.dueDate < today) status = 'overdue';
-                counts[status]++;
-
-                const card = document.createElement('div');
-                card.className = 'task-card group';
-                card.setAttribute('data-id', task.id);
-                card.setAttribute('data-title', task.title.toLowerCase());
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <span class="text-[8px] font-black uppercase px-2 py-1 rounded-md ${task.priority === 'high' ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}">${task.priority}</span>
-                        <button onclick="deleteTask('${task.id}')" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>
-                    </div>
-                    <h4 class="font-extrabold text-[13px] leading-tight mb-3">${task.title}</h4>
-                    <div class="flex items-center gap-2 text-[9px] font-bold text-slate-400">
-                        <i class="far fa-calendar-alt text-blue-500"></i> ${task.dueDate}
-                    </div>
-                `;
-                document.getElementById(cols[status]).appendChild(card);
-            });
-            Object.keys(counts).forEach(k => document.getElementById(`count-${k}`).innerText = counts[k]);
-            updateAnalytics(counts);
-            renderCalendar();
-        }
-
-        // Navigation & UI
         window.showView = (view) => {
-            document.getElementById('dashboard-view').classList.toggle('hidden', view !== 'dashboard');
-            document.getElementById('analytics-view').classList.toggle('hidden', view !== 'analytics');
-            document.getElementById('view-title').innerText = view === 'dashboard' ? 'Workspace' : 'Analytics';
-            
-            document.getElementById('nav-dash').className = view === 'dashboard' ? 'w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-blue-600 font-bold text-sm shadow-lg' : 'w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-400 hover:bg-white/5 font-bold text-sm transition-all';
-            document.getElementById('nav-anal').className = view === 'analytics' ? 'w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-blue-600 font-bold text-sm shadow-lg' : 'w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-400 hover:bg-white/5 font-bold text-sm transition-all';
+
+            const dash = document.getElementById('dashboard-view');
+
+            const anal = document.getElementById('analytics-view');
+
+            dash.classList.toggle('hidden', view !== 'dashboard');
+
+            anal.classList.toggle('hidden', view !== 'analytics');
+
         };
 
-        window.filterTasks = () => {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.task-card').forEach(card => {
-                card.style.display = card.getAttribute('data-title').includes(query) ? 'block' : 'none';
-            });
-        };
 
-        function updateAnalytics(stats) {
-            const total = tasks.length;
-            const efficiency = total ? Math.round((stats.done / total) * 100) : 0;
-            document.getElementById('stat-efficiency').innerText = efficiency + '%';
-            document.getElementById('stat-done').innerText = stats.done;
-            document.getElementById('stat-total').innerText = total;
 
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pending', 'Working', 'Done', 'Overdue'],
-                    datasets: [{
-                        data: [stats.todo, stats.doing, stats.done, stats.overdue],
-                        backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444'],
-                        borderWidth: 0, cutout: '80%'
-                    }]
-                },
-                options: { plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold' } } } } }
-            });
-        }
+        // Dark Mode
 
-        // Global Actions
-        window.openModal = () => document.getElementById('taskModal').style.display = 'flex';
-        window.closeModal = () => document.getElementById('taskModal').style.display = 'none';
         window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
-        window.signOutUser = () => signOut(auth);
-        window.deleteTask = async (id) => { if(confirm("Discard task?")) await deleteDoc(doc(db, "tasks", id)); };
-        
-        window.saveTask = async () => {
-            const title = document.getElementById('taskTitle').value;
-            const date = document.getElementById('taskDate').value;
-            const priority = document.getElementById('taskPriority').value;
-            if(title && date) {
-                await addDoc(collection(db, "tasks"), { title, dueDate: date, priority, status: "todo", userId: currentUser.uid });
-                closeModal();
-            }
-        };
+
+
+
+        // Drag & Drop
 
         function initSortable() {
+
             ['col-todo', 'col-doing', 'col-done', 'col-overdue'].forEach(id => {
-                new Sortable(document.getElementById(id), { group: 'tasks', animation: 300, onEnd: async (e) => {
-                    await updateDoc(doc(db, "tasks", e.item.getAttribute('data-id')), { status: e.to.getAttribute('data-status') });
-                }});
+
+                new Sortable(document.getElementById(id), {
+
+                    group: 'tasks',
+
+                    animation: 200,
+
+                    onEnd: async (evt) => {
+
+                        const taskId = evt.item.getAttribute('data-id');
+
+                        const newStatus = evt.to.getAttribute('data-status');
+
+                        await updateDoc(doc(db, "tasks", taskId), { status: newStatus });
+
+                    }
+
+                });
+
             });
+
         }
 
-        // 3D Background
+
+
+        window.addTask = () => document.getElementById('taskModal').style.display = 'flex';
+
+        window.closeModal = () => document.getElementById('taskModal').style.display = 'none';
+
+
+
+        window.saveTask = async () => {
+
+            const title = document.getElementById('taskTitle').value;
+
+            const date = document.getElementById('taskDate').value;
+
+            const priority = document.getElementById('taskPriority').value;
+
+            if (title && date) {
+
+                await addDoc(collection(db, "tasks"), { 
+
+                    title, dueDate: date, priority, status: "todo", userId: currentUser.uid, createdAt: serverTimestamp() 
+
+                });
+
+                closeModal();
+
+            }
+
+        };
+
+
+
+        window.deleteTask = async (id) => { if(confirm("Discard this task?")) await deleteDoc(doc(db, "tasks", id)); };
+
+
+
+        function listenForTasks() {
+
+            const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
+
+            onSnapshot(q, (snapshot) => {
+
+                const containers = { todo: 'col-todo', doing: 'col-doing', done: 'col-done', overdue: 'col-overdue' };
+
+                Object.values(containers).forEach(id => document.getElementById(id).innerHTML = '');
+
+                
+
+                let stats = { todo: 0, doing: 0, done: 0, overdue: 0 };
+
+                const today = new Date().toISOString().split('T')[0];
+
+
+
+                snapshot.docs.forEach(d => {
+
+                    const data = d.data();
+
+                    let status = data.status;
+
+                    if (status !== 'done' && data.dueDate < today) status = 'overdue';
+
+
+
+                    stats[status]++;
+
+                    const card = document.createElement('div');
+
+                    card.className = `glass-card p-5 border-${status} group animate-in slide-in-from-bottom-2 duration-300`;
+
+                    card.setAttribute('data-id', d.id);
+
+                    card.setAttribute('data-title', data.title.toLowerCase());
+
+                    card.innerHTML = `
+
+                        <div class="flex justify-between items-start mb-4">
+
+                            <h4 class="font-bold text-sm leading-snug">${data.title}</h4>
+
+                            <span class="p-${data.priority || 'medium'} px-2 py-0.5 rounded-lg text-[7px] font-black uppercase"><i class="fas fa-star"></i></span>
+
+                        </div>
+
+                        <div class="flex items-center justify-between">
+
+                            <span class="text-[9px] font-bold text-slate-400"><i class="far fa-calendar-check mr-1"></i> ${data.dueDate}</span>
+
+                            <button onclick="deleteTask('${d.id}')" class="opacity-0 group-hover:opacity-100 text-rose-400 transition-all"><i class="fas fa-trash-alt text-xs"></i></button>
+
+                        </div>
+
+                    `;
+
+                    document.getElementById(containers[status]).appendChild(card);
+
+                });
+
+
+
+                // Update UI Counters
+
+                Object.keys(stats).forEach(k => document.getElementById(`count-${k}`).innerText = stats[k]);
+
+                updateAnalytics(stats);
+
+            });
+
+        }
+
+
+
+        window.filterTasks = () => {
+
+            const query = document.getElementById('searchInput').value.toLowerCase();
+
+            document.querySelectorAll('.glass-card').forEach(card => {
+
+                const title = card.getAttribute('data-title');
+
+                card.style.display = title.includes(query) ? 'block' : 'none';
+
+            });
+
+        };
+
+
+
+        function updateAnalytics(stats) {
+
+            const total = stats.todo + stats.doing + stats.done + stats.overdue;
+
+            const efficiency = total ? Math.round((stats.done / total) * 100) : 0;
+
+            document.getElementById('efficiency-stat').innerText = efficiency + '%';
+
+
+
+            const ctx = document.getElementById('statusChart').getContext('2d');
+
+            if(statusChart) statusChart.destroy();
+
+            statusChart = new Chart(ctx, {
+
+                type: 'doughnut',
+
+                data: {
+
+                    labels: ['Pending', 'Working', 'Done', 'Overdue'],
+
+                    datasets: [{
+
+                        data: [stats.todo, stats.doing, stats.done, stats.overdue],
+
+                        backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444'],
+
+                        borderWidth: 0, cutout: '75%'
+
+                    }]
+
+                },
+
+                options: { plugins: { legend: { position: 'right', labels: { font: { weight: 'bold' }, usePointStyle: true } } } }
+
+            });
+
+        }
+
+
+
+        // Date Display
+
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+
+
+        // 3D Background Logic
+
         const scene = new THREE.Scene();
+
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+
         renderer.setSize(window.innerWidth, window.innerHeight);
-        const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshNormalMaterial({ wireframe: true, opacity: 0.1, transparent: true }));
-        scene.add(knot); camera.position.z = 30;
-        function animate() { requestAnimationFrame(animate); knot.rotation.x += 0.001; knot.rotation.y += 0.002; renderer.render(scene, camera); }
+
+        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+
+        const material = new THREE.MeshNormalMaterial({ wireframe: true, opacity: 0.2, transparent: true });
+
+        const mesh = new THREE.Mesh(geometry, material);
+
+        scene.add(mesh); camera.position.z = 30;
+
+        function animate() { requestAnimationFrame(animate); mesh.rotation.x += 0.001; mesh.rotation.y += 0.002; renderer.render(scene, camera); }
+
         animate();
+
+
+
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+
     </script>
+
 </body>
+
 </html>
