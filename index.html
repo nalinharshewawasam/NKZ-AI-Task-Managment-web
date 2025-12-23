@@ -3,38 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NKZ Studio | Smart Task Manager</title>
-    
+    <title>NKZ Studio | Pro Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; overflow: hidden; margin: 0; }
-        .sidebar { background: #0f172a; color: white; width: 300px; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.5); transition: 0.3s; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; overflow: hidden; }
         
-        /* OVERDUE RED GLASS UI */
-        .glass-overdue { 
-            background: rgba(254, 226, 226, 0.4) !important; 
-            border: 1px solid rgba(239, 68, 68, 0.3) !important; 
-            backdrop-filter: blur(15px);
-        }
+        /* MULTI-STAGE GLASS EFFECTS */
+        .glass-todo { background: rgba(241, 245, 249, 0.4); border: 1px solid rgba(148, 163, 184, 0.2); }
+        .glass-doing { background: rgba(219, 234, 254, 0.4); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .glass-done { background: rgba(209, 250, 229, 0.4); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .glass-overdue { background: rgba(254, 226, 226, 0.5); border: 1px solid rgba(239, 68, 68, 0.3); }
 
-        /* CALENDAR STYLES */
-        .calendar-day { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 10px; cursor: pointer; transition: 0.2s; }
-        .calendar-day.active { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
-        .calendar-day.has-overdue { background: #ef4444 !important; color: white !important; font-weight: bold; animation: pulse-red 2s infinite; }
-        
-        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .glass-card { backdrop-filter: blur(12px); border-radius: 2.5rem; transition: 0.3s ease; }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); }
+
+        .calendar-day { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 10px; cursor: pointer; }
+        .calendar-day.active { background: #3b82f6; color: white; }
+        .calendar-day.has-overdue { background: #ef4444; color: white; animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; }
-        
-        .priority-high { color: #ef4444; background: #fee2e2; padding: 2px 8px; border-radius: 6px; font-size: 9px; }
-        .priority-medium { color: #f59e0b; background: #fef3c7; padding: 2px 8px; border-radius: 6px; font-size: 9px; }
-        .priority-low { color: #10b981; background: #d1fae5; padding: 2px 8px; border-radius: 6px; font-size: 9px; }
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.4; }
     </style>
 </head>
 <body>
@@ -42,90 +34,76 @@
     <canvas id="bg-canvas"></canvas>
 
     <div id="taskModal" class="modal">
-        <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl">
-            <h3 class="text-2xl font-bold mb-6 text-slate-800">Create Task</h3>
+        <div class="bg-white p-10 rounded-[3rem] w-full max-w-md shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6">Plan Your Task</h3>
             <div class="space-y-4">
-                <input type="text" id="taskTitle" placeholder="Task Title" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-blue-500">
+                <input type="text" id="taskTitle" placeholder="What's on your mind?" class="w-full p-4 bg-slate-50 border rounded-2xl outline-blue-500">
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="date" id="taskDate" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-blue-500 text-sm">
-                    <input type="time" id="taskTime" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-blue-500 text-sm">
+                    <input type="date" id="taskDate" class="p-4 bg-slate-50 border rounded-2xl outline-blue-500 text-sm">
+                    <input type="time" id="taskTime" class="p-4 bg-slate-50 border rounded-2xl outline-blue-500 text-sm">
                 </div>
-                <select id="taskPriority" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-blue-500 text-sm">
+                <select id="taskPriority" class="w-full p-4 bg-slate-50 border rounded-2xl outline-blue-500 text-sm">
                     <option value="low">Low Priority</option>
                     <option value="medium" selected>Medium Priority</option>
                     <option value="high">High Priority</option>
                 </select>
                 <div class="flex gap-4 mt-8">
-                    <button onclick="closeModal()" class="flex-1 py-4 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition">Cancel</button>
-                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-xl hover:bg-blue-700 transition">Create</button>
+                    <button onclick="closeModal()" class="flex-1 py-4 text-slate-400 font-bold">Cancel</button>
+                    <button onclick="saveTask()" class="flex-1 py-4 bg-slate-900 text-white font-bold rounded-2xl shadow-xl">Create</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="flex h-screen relative z-10">
-        <aside class="sidebar p-8 flex flex-col border-r border-white/5">
-            <div class="flex items-center gap-3 mb-12">
-                <div class="w-12 h-12 bg-gradient-to-tr from-blue-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <i class="fas fa-bolt text-white text-xl"></i>
-                </div>
-                <span class="text-2xl font-black tracking-tighter">NKZ Studio</span>
+        <aside class="w-72 bg-[#0f172a] text-white p-8 flex flex-col border-r border-white/5">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center font-black">N</div>
+                <span class="text-xl font-bold tracking-tight">NKZ Studio</span>
             </div>
 
-            <div class="bg-white/5 backdrop-blur-md p-5 rounded-[2rem] border border-white/10 mb-10">
-                <div class="flex justify-between items-center mb-6">
-                    <span id="currentMonth" class="text-[10px] font-black uppercase tracking-widest text-blue-400">Month</span>
-                    <i class="fas fa-calendar-alt text-xs text-white/20"></i>
+            <div class="bg-white/5 p-5 rounded-[2rem] border border-white/10 mb-8 text-center">
+                <div class="flex justify-between items-center mb-4 px-1">
+                    <button onclick="changeMonth(-1)" class="text-xs hover:text-blue-400"><i class="fas fa-chevron-left"></i></button>
+                    <span id="monthDisplay" class="text-[10px] font-black uppercase tracking-widest text-blue-400">Month</span>
+                    <button onclick="changeMonth(1)" class="text-xs hover:text-blue-400"><i class="fas fa-chevron-right"></i></button>
                 </div>
-                <div class="grid grid-cols-7 gap-1 text-center" id="calendarGrid"></div>
+                <div class="grid grid-cols-7 gap-1" id="calendarGrid"></div>
             </div>
 
-            <nav class="flex-1 space-y-3">
-                <button class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-600/20">
-                    <i class="fas fa-columns"></i> Dashboard
-                </button>
+            <nav class="flex-1 space-y-2">
+                <button class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold"><i class="fas fa-th-large"></i> Dashboard</button>
+                <button class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:text-white transition"><i class="fas fa-chart-pie"></i> Overview</button>
             </nav>
 
-            <button id="logout-btn" class="mt-auto flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 transition font-bold">
-                <i class="fas fa-power-off"></i> Logout
-            </button>
+            <button id="logout-btn" class="mt-auto flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 transition font-bold"><i class="fas fa-power-off"></i> Logout</button>
         </aside>
 
-        <main class="flex-1 flex flex-col overflow-hidden">
-            <header class="h-28 flex items-center justify-between px-12">
+        <main class="flex-1 flex flex-col overflow-hidden p-12">
+            <header class="flex justify-between items-center mb-10">
                 <div>
-                    <h2 class="text-4xl font-black text-slate-900 tracking-tight">Daily Tasks</h2>
-                    <p class="text-slate-400 text-sm font-medium">Manage your workflow with priority.</p>
+                    <h2 class="text-4xl font-black text-slate-900 tracking-tight">Workspace</h2>
+                    <p class="text-slate-400 font-medium">Keep moving, stay productive.</p>
                 </div>
-                <button onclick="addTask()" class="bg-slate-900 text-white px-10 py-4 rounded-[1.5rem] font-bold shadow-2xl hover:bg-blue-600 hover:scale-105 transition-all">
-                    + New Task
-                </button>
+                <button onclick="addTask()" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-2xl hover:bg-blue-600 transition-all">+ New Task</button>
             </header>
 
-            <div class="flex-1 p-12 grid grid-cols-1 md:grid-cols-4 gap-8 overflow-y-auto">
-                <div>
-                    <h3 class="flex items-center gap-2 font-black text-slate-400 text-[10px] mb-8 uppercase tracking-[0.2em]">
-                        <span class="w-2 h-2 rounded-full bg-slate-300"></span> To Do
-                    </h3>
-                    <div id="col-todo" class="space-y-6"></div>
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-4 gap-6 overflow-y-auto">
+                <div id="col-todo-parent">
+                    <h3 class="flex items-center gap-2 font-black text-slate-400 text-[10px] mb-6 uppercase tracking-widest"><span class="w-2 h-2 rounded-full bg-slate-300"></span> To Do</h3>
+                    <div id="col-todo" class="space-y-4"></div>
                 </div>
-                <div>
-                    <h3 class="flex items-center gap-2 font-black text-blue-500 text-[10px] mb-8 uppercase tracking-[0.2em]">
-                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Progress
-                    </h3>
-                    <div id="col-doing" class="space-y-6"></div>
+                <div id="col-doing-parent">
+                    <h3 class="flex items-center gap-2 font-black text-blue-500 text-[10px] mb-6 uppercase tracking-widest"><span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> In Progress</h3>
+                    <div id="col-doing" class="space-y-4"></div>
                 </div>
-                <div>
-                    <h3 class="flex items-center gap-2 font-black text-emerald-500 text-[10px] mb-8 uppercase tracking-[0.2em]">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Completed
-                    </h3>
-                    <div id="col-done" class="space-y-6"></div>
+                <div id="col-done-parent">
+                    <h3 class="flex items-center gap-2 font-black text-emerald-500 text-[10px] mb-6 uppercase tracking-widest"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Completed</h3>
+                    <div id="col-done" class="space-y-4"></div>
                 </div>
-                <div>
-                    <h3 class="flex items-center gap-2 font-black text-rose-500 text-[10px] mb-8 uppercase tracking-[0.2em]">
-                        <span class="w-2 h-2 rounded-full bg-rose-500"></span> Overdue
-                    </h3>
-                    <div id="col-overdue" class="space-y-6"></div>
+                <div id="col-overdue-parent">
+                    <h3 class="flex items-center gap-2 font-black text-rose-500 text-[10px] mb-6 uppercase tracking-widest"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Overdue</h3>
+                    <div id="col-overdue" class="space-y-4"></div>
                 </div>
             </div>
         </main>
@@ -142,84 +120,71 @@
             projectId: "nkz-task-management",
             storageBucket: "nkz-task-management.firebasestorage.app",
             messagingSenderId: "880985174490",
-            appId: "1:880985174490:web:9080e073b462e3201410e3",
-            measurementId: "G-S96M78ZHSL"
+            appId: "1:880985174490:web:9080e073b462e3201410e3"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         let currentUser = null;
+        let currentMonthDate = new Date();
 
         onAuthStateChanged(auth, (user) => {
-            if (user) { currentUser = user; listenForTasks(); }
+            if (user) { currentUser = user; listenForTasks(); renderCalendar(); }
             else { window.location.href = 'login.html'; }
         });
 
         document.getElementById('logout-btn').onclick = () => signOut(auth);
         window.addTask = () => document.getElementById('taskModal').style.display = 'flex';
-        window.closeModal = () => {
-            document.getElementById('taskModal').style.display = 'none';
-            document.getElementById('taskTitle').value = '';
-        };
+        window.closeModal = () => document.getElementById('taskModal').style.display = 'none';
 
         window.saveTask = async () => {
             const title = document.getElementById('taskTitle').value;
             const date = document.getElementById('taskDate').value;
             const time = document.getElementById('taskTime').value;
             const priority = document.getElementById('taskPriority').value;
-
             if (title && date) {
-                await addDoc(collection(db, "tasks"), {
-                    title, dueDate: date, dueTime: time, priority,
-                    status: "todo", userId: currentUser.uid, createdAt: serverTimestamp()
-                });
+                await addDoc(collection(db, "tasks"), { title, dueDate: date, dueTime: time, priority, status: "todo", userId: currentUser.uid, createdAt: serverTimestamp() });
                 window.closeModal();
             }
         };
 
         window.moveTask = async (id, status) => await updateDoc(doc(db, "tasks", id), { status });
-        window.deleteTask = async (id) => { if(confirm("Delete this task?")) await deleteDoc(doc(db, "tasks", id)); };
+        window.deleteTask = async (id) => { if(confirm("Delete task?")) await deleteDoc(doc(db, "tasks", id)); };
 
         function listenForTasks() {
             const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
             onSnapshot(q, (snapshot) => {
                 const cols = { todo: document.getElementById('col-todo'), doing: document.getElementById('col-doing'), done: document.getElementById('col-done'), overdue: document.getElementById('col-overdue') };
                 Object.values(cols).forEach(c => c.innerHTML = '');
-                
-                // Reset Calendar
                 document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('has-overdue'));
-                
                 const today = new Date().toISOString().split('T')[0];
 
                 snapshot.docs.forEach(d => {
                     const data = d.data();
                     let status = data.status;
-
-                    // Overdue Logic
                     if (status !== 'done' && data.dueDate < today) {
                         status = 'overdue';
-                        // Highlight day in calendar
                         const dayNum = parseInt(data.dueDate.split('-')[2]);
-                        const calDay = document.querySelector(`.calendar-day[data-day="${dayNum}"]`);
-                        if(calDay) calDay.classList.add('has-overdue');
+                        const dayCell = document.querySelector(`.calendar-day[data-day="${dayNum}"]`);
+                        if(dayCell) dayCell.classList.add('has-overdue');
                     }
 
                     const card = document.createElement('div');
-                    card.className = `glass-card p-6 rounded-[2.5rem] relative group ${status === 'overdue' ? 'glass-overdue' : ''}`;
+                    // APPLYING STAGE-SPECIFIC GLASS EFFECT
+                    card.className = `glass-card glass-${status} p-6 relative group`;
                     card.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <h4 class="font-bold text-slate-800 leading-tight">${data.title}</h4>
-                            <span class="priority-${data.priority}">${data.priority}</span>
+                        <div class="flex justify-between mb-2">
+                            <h4 class="font-bold text-slate-800 text-sm">${data.title}</h4>
+                            <span class="text-[8px] font-black uppercase px-2 py-1 rounded-md bg-white/50">${data.priority}</span>
                         </div>
-                        <div class="flex items-center gap-3 text-[10px] font-bold text-slate-400 mb-6">
-                            <span><i class="far fa-calendar-alt text-blue-500"></i> ${data.dueDate}</span>
-                            <span><i class="far fa-clock text-blue-500"></i> ${data.dueTime || 'Anytime'}</span>
+                        <div class="flex items-center gap-3 text-[10px] font-bold text-slate-500 mb-5">
+                            <span><i class="far fa-calendar-alt"></i> ${data.dueDate}</span>
+                            <span><i class="far fa-clock"></i> ${data.dueTime || '--:--'}</span>
                         </div>
                         <div class="flex gap-2">
-                            ${status === 'todo' || status === 'overdue' ? `<button onclick="moveTask('${d.id}', 'doing')" class="bg-blue-600 text-white px-5 py-2 rounded-xl text-[10px] font-bold shadow-lg shadow-blue-500/20">Start</button>` : ''}
-                            ${status === 'doing' ? `<button onclick="moveTask('${d.id}', 'done')" class="bg-emerald-500 text-white px-5 py-2 rounded-xl text-[10px] font-bold shadow-lg shadow-emerald-500/20">Complete</button>` : ''}
-                            <button onclick="deleteTask('${d.id}')" class="ml-auto text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
+                            ${status !== 'done' ? `<button onclick="moveTask('${d.id}', '${status==='todo'||status==='overdue'?'doing':'done'}')" class="bg-white/80 px-4 py-2 rounded-xl text-[10px] font-bold shadow-sm hover:bg-white">${status==='doing'?'Complete':'Start'}</button>` : '<span class="text-[10px] font-bold text-emerald-600"><i class="fas fa-check-circle"></i> Finished</span>'}
+                            <button onclick="deleteTask('${d.id}')" class="ml-auto text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     `;
                     cols[status].appendChild(card);
@@ -227,27 +192,39 @@
             });
         }
 
-        // CALENDAR INIT
-        const grid = document.getElementById('calendarGrid');
-        const now = new Date();
-        document.getElementById('currentMonth').innerText = now.toLocaleString('default', { month: 'long' });
-        for(let i=1; i<=31; i++) {
-            const day = document.createElement('div');
-            day.className = `calendar-day ${i === now.getDate() ? 'active' : 'text-slate-500'}`;
-            day.innerText = i;
-            day.setAttribute('data-day', i);
-            grid.appendChild(day);
+        // CALENDAR NAVIGATION LOGIC
+        window.changeMonth = (dir) => {
+            currentMonthDate.setMonth(currentMonthDate.getMonth() + dir);
+            renderCalendar();
+            listenForTasks(); // Re-sync tasks with new month
+        };
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            document.getElementById('monthDisplay').innerText = currentMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            const daysInMonth = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 0).getDate();
+            const today = new Date();
+
+            for(let i=1; i<=daysInMonth; i++) {
+                const day = document.createElement('div');
+                const isToday = i === today.getDate() && currentMonthDate.getMonth() === today.getMonth();
+                day.className = `calendar-day ${isToday ? 'active' : 'text-slate-400'}`;
+                day.innerText = i;
+                day.setAttribute('data-day', i);
+                grid.appendChild(day);
+            }
         }
 
-        // 3D BACKGROUND
+        // BACKGROUND ANIMATION
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        const geometry = new THREE.TorusKnotGeometry(10, 2.5, 150, 20);
-        const mesh = new THREE.Mesh(geometry, new THREE.MeshNormalMaterial({ wireframe: true, transparent: true, opacity: 0.03 }));
+        const mesh = new THREE.Mesh(new THREE.TorusGeometry(10, 3, 16, 100), new THREE.MeshNormalMaterial({ wireframe: true, transparent: true, opacity: 0.1 }));
         scene.add(mesh); camera.position.z = 25;
-        function animate() { requestAnimationFrame(animate); mesh.rotation.x += 0.001; mesh.rotation.y += 0.002; renderer.render(scene, camera); }
+        function animate() { requestAnimationFrame(animate); mesh.rotation.y += 0.002; renderer.render(scene, camera); }
         animate();
     </script>
 </body>
