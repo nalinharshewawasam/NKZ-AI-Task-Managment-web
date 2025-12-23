@@ -104,18 +104,24 @@
 
         // --- ADD TASK ---
         window.addTask = async () => {
-            const title = prompt("Enter task title:");
-            if (title) {
-                try {
-                    await addDoc(collection(db, "tasks"), {
-                        title: title,
-                        status: "todo",
-                        userId: currentUser.uid,
-                        timestamp: serverTimestamp()
-                    });
-                } catch (e) { alert("Error adding task"); }
-            }
-        };
+    const title = prompt("Enter task title:");
+    if (title && currentUser) {
+        try {
+            await addDoc(collection(db, "tasks"), {
+                title: title,
+                status: "todo",
+                userId: currentUser.uid,
+                createdAt: new Date().toISOString() // සරල Date එකක් පාවිච්චි කරමු
+            });
+            console.log("Task Added!");
+        } catch (e) { 
+            console.error("Error adding document: ", e);
+            alert("Error: " + e.message); 
+        }
+    } else {
+        alert("Please login first or enter a title!");
+    }
+};
 
         // --- UPDATE TASK STATUS ---
         window.moveTask = async (id, nextStatus) => {
@@ -163,3 +169,4 @@
     </script>
 </body>
 </html>
+
