@@ -3,156 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskMaster Pro | Join Now</title>
-    
+    <title>TaskMaster Pro | Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: #020617; 
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
         #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; }
-
-        .auth-card {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(30px) saturate(200%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-            animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .input-field {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .input-field:focus {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: #3b82f6;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-            outline: none;
-        }
-
-        .btn-signup {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            transition: all 0.3s;
-        }
-
-        .btn-signup:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
-            filter: brightness(1.1);
-        }
+        .auth-card { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(30px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6); }
+        .input-field { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); color: white; transition: 0.3s; }
+        .input-field:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
     </style>
 </head>
 <body>
-
     <canvas id="bg-canvas"></canvas>
 
-    <div class="auth-card w-full max-w-lg p-12 rounded-[3rem] relative z-10">
-        <div class="text-center mb-10">
-            <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-2xl">
-                <i class="fas fa-user-plus text-2xl text-white"></i>
-            </div>
+    <div class="auth-card w-full max-w-md p-10 rounded-[2.5rem] relative z-10">
+        <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-white">Create Account</h1>
-            <p class="text-slate-400 text-sm mt-2">Start your productivity journey today.</p>
+            <p class="text-slate-400 text-sm mt-2">Join NKZ Task Management</p>
         </div>
 
-        <form onsubmit="handleSignup(event)" class="grid grid-cols-2 gap-5">
-            <div class="col-span-2 md:col-span-1 relative">
-                <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                <input type="text" placeholder="First Name" class="input-field w-full pl-12 pr-4 py-4 rounded-2xl" required>
-            </div>
-            <div class="col-span-2 md:col-span-1 relative">
-                <i class="fas fa-signature absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                <input type="text" placeholder="Last Name" class="input-field w-full pl-12 pr-4 py-4 rounded-2xl" required>
-            </div>
-            <div class="col-span-2 relative">
+        <form id="signup-form" class="space-y-5">
+            <div class="relative">
                 <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                <input type="email" placeholder="Email Address" class="input-field w-full pl-12 pr-4 py-4 rounded-2xl" required>
+                <input type="email" id="email" placeholder="Email Address" class="input-field w-full pl-12 pr-4 py-4 rounded-2xl" required>
             </div>
-            <div class="col-span-2 relative">
+            <div class="relative">
                 <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                <input type="password" placeholder="Create Strong Password" class="input-field w-full pl-12 pr-4 py-4 rounded-2xl" required>
+                <input type="password" id="password" placeholder="Create Password" class="input-field w-full pl-12 pr-4 py-4 rounded-2xl" required>
             </div>
-            
-            <div class="col-span-2 flex items-center px-2 py-2">
-                <input type="checkbox" id="terms" class="mr-3 rounded border-slate-700 bg-slate-800" required>
-                <label for="terms" class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">I agree to the terms & conditions</label>
-            </div>
-
-            <button type="submit" id="signup-btn" class="btn-signup col-span-2 py-4 rounded-2xl text-white font-bold tracking-wide shadow-lg">
-                Register Now
-            </button>
+            <button type="submit" id="signup-btn" class="w-full py-4 bg-blue-600 rounded-2xl text-white font-bold hover:bg-blue-700 transition shadow-lg">Register Now</button>
         </form>
-
-        <div class="mt-8 text-center border-t border-white/5 pt-6">
-            <p class="text-slate-400 text-sm">
-                Already have an account? 
-                <a href="login.html" class="text-blue-400 font-bold ml-1 hover:underline">Sign In</a>
-            </p>
-        </div>
+        <p class="mt-6 text-center text-slate-400 text-sm">Already have an account? <a href="login.html" class="text-blue-500 font-bold">Login</a></p>
     </div>
 
-    <script>
-        // --- 3D BACKGROUND (Floating Geometry) ---
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDd6T85SZAc9eh0Kv2BjaKg4GKHP659bgY",
+            authDomain: "nkz-task-management.firebaseapp.com",
+            projectId: "nkz-task-management",
+            storageBucket: "nkz-task-management.firebasestorage.app",
+            messagingSenderId: "880985174490",
+            appId: "1:880985174490:web:9080e073b462e3201410e3",
+            measurementId: "G-S96M78ZHSL"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('signup-btn');
+
+            btn.disabled = true;
+            btn.innerText = "Creating Account...";
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert("Account Created Successfully!");
+                window.location.href = 'index.html';
+            } catch (error) {
+                alert(error.message);
+                btn.disabled = false;
+                btn.innerText = "Register Now";
+            }
+        });
+
+        // Background Animation
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true, antialias: true });
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-
-        const geometry = new THREE.IcosahedronGeometry(12, 1);
-        const material = new THREE.MeshNormalMaterial({ wireframe: true, transparent: true, opacity: 0.1 });
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-        camera.position.z = 25;
-
-        function animate() {
-            requestAnimationFrame(animate);
-            mesh.rotation.y += 0.003;
-            mesh.rotation.x += 0.002;
-            renderer.render(scene, camera);
-        }
+        const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(10, 1), new THREE.MeshNormalMaterial({ wireframe: true, opacity: 0.1, transparent: true }));
+        scene.add(mesh); camera.position.z = 25;
+        function animate() { requestAnimationFrame(animate); mesh.rotation.y += 0.002; renderer.render(scene, camera); }
         animate();
-
-        // --- SIGNUP HANDLER ---
-        function handleSignup(event) {
-            event.preventDefault();
-            const btn = document.getElementById('signup-btn');
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Creating Account...';
-            btn.disabled = true;
-
-            // සාර්ථකව Sign up වුණාම කෙලින්ම index.html (Dashboard) එකට යවනවා
-            setTimeout(() => {
-                alert("Welcome to TaskMaster Pro!");
-                window.location.href = 'index.html';
-            }, 1500);
-        }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
