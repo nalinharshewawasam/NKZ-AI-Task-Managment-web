@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NKZ Master | The Ultimate Workspace</title>
+    <title>NKZ Master Pro | Ultimate Workspace</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -12,126 +12,166 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
         
-        :root { --bg-main: #f8fafc; --text-main: #1e293b; --card-bg: #ffffff; --border: rgba(0,0,0,0.05); }
-        .dark-mode { --bg-main: #020617; --text-main: #f1f5f9; --card-bg: #0f172a; --border: rgba(255,255,255,0.1); }
+        :root { --bg-main: #f8fafc; --sidebar-bg: #0f172a; --accent: #3b82f6; --text-color: #1e293b; }
+        .dark-mode { --bg-main: #020617; --sidebar-bg: #020617; --accent: #60a5fa; --text-color: #f1f5f9; }
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); transition: 0.4s; overflow-x: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-color); transition: 0.4s; overflow: hidden; }
         
-        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 1.5rem; transition: 0.3s; cursor: grab; }
-        .dark-mode .glass-card { color: #f1f5f9; }
+        /* Glassmorphism Cards */
+        .task-card { background: white; border-radius: 1.5rem; transition: 0.3s; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 10px 20px rgba(0,0,0,0.02); }
+        .dark-mode .task-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.05); color: white; }
+        .task-card:hover { transform: translateY(-5px); box-shadow: 0 20px 30px rgba(0,0,0,0.05); }
 
-        .sidebar { background: #020617; color: white; width: 280px; z-index: 50; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(12px); }
+        /* Sidebar Styling */
+        .sidebar { background: var(--sidebar-bg); width: 280px; transition: 0.4s; z-index: 100; }
         
-        /* Calendar Styles */
-        .calendar-day { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .calendar-day:hover { background: rgba(255,255,255,0.1); }
-        .calendar-day.active { background: #3b82f6; color: white; font-weight: bold; }
+        /* Calendar Highlight */
+        .cal-day { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 10px; transition: 0.3s; color: #94a3b8; }
+        .cal-day.today { background: #3b82f6; color: white; font-weight: 800; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+        .cal-day.has-task { border: 1.5px solid #3b82f6; color: #3b82f6; }
 
-        #profile-dropdown { display: none; position: absolute; left: 20px; bottom: 80px; width: 240px; background: var(--card-bg); color: var(--text-main); border-radius: 1.2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 60; border: 1px solid var(--border); }
+        /* Modal Blur */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 1000; align-items: center; justify-content: center; }
         
-        .p-high { background: #ef4444; color: white; }
-        .p-medium { background: #f59e0b; color: white; }
-        .p-low { background: #10b981; color: white; }
-        
-        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.2; }
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.3; }
+
+        .btn-grad { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
     </style>
 </head>
-<body class="flex flex-col md:flex-row h-screen">
+<body class="flex h-screen">
 
     <canvas id="bg-canvas"></canvas>
 
-    <div id="taskModal" class="modal">
-        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] w-[95%] max-w-lg">
-            <h3 class="text-2xl font-black mb-6">Deploy New Mission</h3>
+    <div id="taskModal" class="modal-overlay">
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] w-full max-w-lg mx-4">
+            <h3 class="text-2xl font-extrabold mb-6">Create New Task</h3>
             <div class="space-y-4">
-                <input type="text" id="taskTitle" placeholder="Task Name" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-blue-500 dark:text-white">
-                <textarea id="taskDesc" placeholder="Description..." class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-blue-500 h-24 dark:text-white"></textarea>
+                <input type="text" id="taskTitle" placeholder="What's the mission?" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500 transition-all dark:text-white">
+                <textarea id="taskDesc" placeholder="Brief details..." class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none border-2 border-transparent focus:border-blue-500 h-24 dark:text-white"></textarea>
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="date" id="taskDate" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-sm dark:text-white">
-                    <select id="taskPriority" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-sm dark:text-white">
-                        <option value="high">🔥 High</option>
-                        <option value="medium" selected>⚡ Medium</option>
-                        <option value="low">🍃 Low</option>
+                    <input type="date" id="taskDate" class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl dark:text-white">
+                    <select id="taskPriority" class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl dark:text-white">
+                        <option value="high">High Priority</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="low">Low</option>
                     </select>
                 </div>
-                <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 p-4 rounded-2xl text-center">
-                    <label class="cursor-pointer">
-                        <p class="text-xs font-bold text-slate-400">Upload Attachment (Image)</p>
-                        <input type="file" id="taskImage" class="hidden" accept="image/*">
-                    </label>
-                    <div id="img-preview" class="mt-2 hidden"><img src="" class="h-16 mx-auto rounded-lg"></div>
-                </div>
-                <div class="flex gap-4 mt-6">
-                    <button onclick="closeModal()" class="flex-1 py-4 text-slate-400 font-bold">Cancel</button>
-                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl">Save Task</button>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition-all">Cancel</button>
+                    <button onclick="saveTask()" class="flex-1 py-4 btn-grad text-white font-bold rounded-2xl shadow-lg">Deploy Task</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <aside class="sidebar p-6 hidden md:flex flex-col h-full relative">
-        <div class="flex items-center gap-3 mb-8">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center"><i class="fas fa-bolt text-white"></i></div>
-            <span class="text-xl font-black">NKZ MASTER</span>
+    <aside class="sidebar flex flex-col p-6 text-white overflow-y-auto">
+        <div class="flex items-center gap-4 mb-10">
+            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i class="fas fa-rocket text-xl"></i>
+            </div>
+            <h1 class="text-xl font-black tracking-tight">NKZ MASTER</h1>
         </div>
 
-        <div class="bg-white/5 p-4 rounded-3xl mb-8 border border-white/10">
-            <div class="flex justify-between items-center mb-4 px-1">
-                <button onclick="changeMonth(-1)" class="text-[10px]"><i class="fas fa-chevron-left"></i></button>
-                <span id="monthDisplay" class="text-[10px] font-black uppercase tracking-widest text-blue-400">DECEMBER</span>
-                <button onclick="changeMonth(1)" class="text-[10px]"><i class="fas fa-chevron-right"></i></button>
+        <div class="bg-white/5 rounded-[2rem] p-5 mb-8 border border-white/5">
+            <div class="flex justify-between items-center mb-6">
+                <span id="monthYear" class="text-xs font-black uppercase tracking-widest text-blue-400">December 2025</span>
+                <div class="flex gap-2">
+                    <button onclick="changeMonth(-1)" class="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10"><i class="fas fa-chevron-left text-[8px]"></i></button>
+                    <button onclick="changeMonth(1)" class="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10"><i class="fas fa-chevron-right text-[8px]"></i></button>
+                </div>
             </div>
-            <div class="grid grid-cols-7 gap-1 text-center mb-2">
-                <div class="text-[8px] opacity-40 font-bold">M</div><div class="text-[8px] opacity-40 font-bold">T</div><div class="text-[8px] opacity-40 font-bold">W</div><div class="text-[8px] opacity-40 font-bold">T</div><div class="text-[8px] opacity-40 font-bold">F</div><div class="text-[8px] opacity-40 font-bold">S</div><div class="text-[8px] opacity-40 font-bold">S</div>
+            <div class="grid grid-cols-7 gap-1 text-center mb-2 opacity-30 text-[9px] font-bold">
+                <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
             </div>
-            <div class="grid grid-cols-7 gap-1" id="calendarGrid"></div>
+            <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
         </div>
 
-        <nav class="flex-1 space-y-2">
-            <button onclick="showView('dashboard')" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white"><i class="fas fa-layer-group"></i> Workspace</button>
-            <button onclick="showView('analytics')" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5 font-bold"><i class="fas fa-chart-pie"></i> Analytics</button>
+        <nav class="flex-1 space-y-3">
+            <button onclick="showView('dashboard')" id="nav-dash" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white transition-all shadow-lg shadow-blue-600/20">
+                <i class="fas fa-th-large"></i> Dashboard
+            </button>
+            <button onclick="showView('analytics')" id="nav-anal" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all">
+                <i class="fas fa-chart-line"></i> Analytics
+            </button>
+            <button onclick="toggleDarkMode()" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all">
+                <i class="fas fa-moon"></i> Dark Mode
+            </button>
         </nav>
 
-        <div class="mt-auto relative">
-            <div onclick="toggleProfileDropdown()" class="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-3 cursor-pointer">
-                <div id="user-initials" class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center font-black">U</div>
-                <div class="flex-1 overflow-hidden"><p id="user-display-name" class="text-xs font-black truncate">User</p></div>
-            </div>
-            <div id="profile-dropdown">
-                <button onclick="toggleDarkMode()" class="w-full text-left px-5 py-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-xl font-bold text-sm"><i class="fas fa-moon mr-3"></i> Dark Mode</button>
-                <button onclick="signOutUser()" class="w-full text-left px-5 py-4 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 rounded-b-xl font-bold text-sm border-t dark:border-slate-800"><i class="fas fa-power-off mr-3"></i> Sign Out</button>
+        <div class="mt-8 pt-8 border-t border-white/10">
+            <div class="bg-gradient-to-r from-blue-600/20 to-transparent p-4 rounded-3xl flex items-center gap-4 border border-white/5 group cursor-pointer relative">
+                <div id="user-avatar" class="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center font-black text-lg shadow-lg">U</div>
+                <div class="flex-1">
+                    <p id="profile-name" class="text-xs font-black">User Name</p>
+                    <p class="text-[9px] text-slate-500 font-bold">Pro Workspace</p>
+                </div>
+                <button onclick="signOutUser()" class="opacity-0 group-hover:opacity-100 transition-all text-rose-500"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto p-6 md:p-10">
-        <header class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
-            <div class="relative w-full md:w-96">
-                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search missions..." class="w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-2xl outline-none shadow-sm dark:text-white">
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h2 id="view-title" class="text-3xl font-black tracking-tight mb-1">Workspace</h2>
+                <div class="flex items-center gap-3">
+                    <span id="current-date-display" class="text-[11px] font-extrabold uppercase tracking-widest text-blue-500 bg-blue-500/10 px-3 py-1 rounded-full">WEDNESDAY, DEC 24</span>
+                    <p class="text-[11px] text-slate-400 font-bold">Stay productive, stay focused.</p>
+                </div>
             </div>
-            <button onclick="addTask()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl">+ NEW TASK</button>
+            
+            <div class="flex items-center gap-4">
+                <div class="relative hidden lg:block">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Search tasks..." class="pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-2xl outline-none w-72 shadow-sm dark:text-white border border-transparent focus:border-blue-500 transition-all">
+                </div>
+                <button onclick="addTask()" class="btn-grad text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-500/20 active:scale-95 transition-all">+ NEW TASK</button>
+            </div>
         </header>
 
-        <div id="dashboard-view" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-            <div class="space-y-4">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Pending</h3>
-                <div id="col-todo" class="column-container min-h-[500px] space-y-4" data-status="todo"></div>
+        <div id="dashboard-view" class="flex-1 overflow-y-auto p-8 md:px-10 pt-0">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 flex justify-between">Pending <span class="bg-slate-200 dark:bg-slate-800 px-2 rounded-lg" id="todo-count">0</span></h3>
+                    <div id="col-todo" class="column min-h-[500px] space-y-4" data-status="todo"></div>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest px-2 flex justify-between">In Progress <span class="bg-blue-100 dark:bg-blue-900/30 px-2 rounded-lg" id="doing-count">0</span></h3>
+                    <div id="col-doing" class="column min-h-[500px] space-y-4" data-status="doing"></div>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-2 flex justify-between">Completed <span class="bg-emerald-100 dark:bg-emerald-900/30 px-2 rounded-lg" id="done-count">0</span></h3>
+                    <div id="col-done" class="column min-h-[500px] space-y-4" data-status="done"></div>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black text-rose-500 uppercase tracking-widest px-2 flex justify-between">Overdue <span class="bg-rose-100 dark:bg-rose-900/30 px-2 rounded-lg" id="overdue-count">0</span></h3>
+                    <div id="col-overdue" class="column min-h-[500px] space-y-4" data-status="overdue"></div>
+                </div>
             </div>
-            <div class="space-y-4">
-                <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest px-2">Working</h3>
-                <div id="col-doing" class="column-container min-h-[500px] space-y-4" data-status="doing"></div>
-            </div>
-            <div class="space-y-4">
-                <h3 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-2">Done</h3>
-                <div id="col-done" class="column-container min-h-[500px] space-y-4" data-status="done"></div>
-            </div>
-            <div class="space-y-4">
-                <h3 class="text-[10px] font-black text-rose-500 uppercase tracking-widest px-2">Delayed</h3>
-                <div id="col-overdue" class="column-container min-h-[500px] space-y-4" data-status="overdue"></div>
+        </div>
+
+        <div id="analytics-view" class="hidden flex-1 overflow-y-auto p-10">
+            <div class="max-w-4xl mx-auto space-y-10">
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="bg-blue-600 p-8 rounded-[2.5rem] text-white shadow-xl">
+                        <p class="text-xs font-bold opacity-80 mb-2">Total Tasks</p>
+                        <h4 id="total-stat" class="text-5xl font-black">0</h4>
+                    </div>
+                    <div class="bg-emerald-500 p-8 rounded-[2.5rem] text-white shadow-xl">
+                        <p class="text-xs font-bold opacity-80 mb-2">Completed</p>
+                        <h4 id="done-stat" class="text-5xl font-black">0</h4>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-xl border border-black/5 dark:border-white/5">
+                        <p class="text-xs font-bold text-slate-400 mb-2">Success Rate</p>
+                        <h4 id="rate-stat" class="text-5xl font-black">0%</h4>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-10 rounded-[3rem] shadow-xl">
+                    <h4 class="font-black text-xl mb-8">Performance Distribution</h4>
+                    <div class="h-[300px]"><canvas id="analyticsChart"></canvas></div>
+                </div>
             </div>
         </div>
     </main>
@@ -139,115 +179,180 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDd6T85SZAc9eh0Kv2BjaKg4GKHP659bgY", authDomain: "nkz-task-management.firebaseapp.com", projectId: "nkz-task-management", storageBucket: "nkz-task-management.firebasestorage.app", messagingSenderId: "880985174490", appId: "1:880985174490:web:9080e073b462e3201410e3" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
         let currentUser = null;
+        let tasks = [];
+        let chart = null;
         let currentMonth = new Date();
 
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
-                document.getElementById('user-display-name').innerText = user.email.split('@')[0];
-                document.getElementById('user-initials').innerText = user.email.charAt(0).toUpperCase();
-                renderCalendar(); listenForTasks(); initSortable();
+                document.getElementById('profile-name').innerText = user.email.split('@')[0];
+                document.getElementById('user-avatar').innerText = user.email.charAt(0).toUpperCase();
+                initApp();
             } else { window.location.href = 'login.html'; }
         });
 
-        // Calendar Logic
+        function initApp() {
+            renderCalendar();
+            listenTasks();
+            initSortable();
+            updateLiveDate();
+        }
+
+        function updateLiveDate() {
+            const now = new Date();
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('current-date-display').innerText = now.toLocaleDateString('en-US', options).toUpperCase();
+        }
+
+        // --- CALENDAR LOGIC (HIGHLIGHTS) ---
         window.changeMonth = (dir) => { currentMonth.setMonth(currentMonth.getMonth() + dir); renderCalendar(); };
         function renderCalendar() {
-            const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
-            document.getElementById('monthDisplay').innerText = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+            const grid = document.getElementById('calendarDays'); grid.innerHTML = '';
+            document.getElementById('monthYear').innerText = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
             const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+            const today = new Date();
+
             for(let i=1; i<=daysInMonth; i++) {
-                const d = document.createElement('div');
-                d.className = `calendar-day ${i === new Date().getDate() && currentMonth.getMonth() === new Date().getMonth() ? 'active' : 'text-slate-500'}`;
-                d.innerText = i; grid.appendChild(d);
+                const day = document.createElement('div');
+                day.className = 'cal-day';
+                if(i === today.getDate() && currentMonth.getMonth() === today.getMonth()) day.classList.add('today');
+                
+                // Highlight logic (if task exists on this day)
+                const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth()+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                if(tasks.some(t => t.dueDate === dateStr)) day.classList.add('has-task');
+
+                day.innerText = i;
+                grid.appendChild(day);
             }
         }
 
-        window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
-        window.toggleProfileDropdown = () => { const d = document.getElementById('profile-dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; };
+        // --- NAVIGATION ---
+        window.showView = (view) => {
+            document.getElementById('dashboard-view').classList.toggle('hidden', view !== 'dashboard');
+            document.getElementById('analytics-view').classList.toggle('hidden', view !== 'analytics');
+            document.getElementById('view-title').innerText = view === 'dashboard' ? 'Workspace' : 'Efficiency Analytics';
+            
+            // Toggle Button Styles
+            document.getElementById('nav-dash').className = view === 'dashboard' ? 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white' : 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 font-bold';
+            document.getElementById('nav-anal').className = view === 'analytics' ? 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white' : 'w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 font-bold';
+            
+            if(view === 'analytics') updateChart();
+        };
 
-        function initSortable() {
-            ['col-todo', 'col-doing', 'col-done', 'col-overdue'].forEach(id => {
-                new Sortable(document.getElementById(id), { group: 'tasks', animation: 200, onEnd: async (e) => {
-                    await updateDoc(doc(db, "tasks", e.item.getAttribute('data-id')), { status: e.to.getAttribute('data-status') });
-                }});
+        // --- FIREBASE TASKS ---
+        function listenTasks() {
+            onSnapshot(query(collection(db, "tasks"), where("userId", "==", currentUser.uid)), (snap) => {
+                tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderTasks();
+                renderCalendar(); // Re-render to show task highlights
+                if(!document.getElementById('analytics-view').classList.contains('hidden')) updateChart();
             });
         }
 
+        function renderTasks() {
+            const cols = { todo: 'col-todo', doing: 'col-doing', done: 'col-done', overdue: 'col-overdue' };
+            Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
+            let counts = { todo: 0, doing: 0, done: 0, overdue: 0 };
+
+            tasks.forEach(task => {
+                let status = task.status;
+                const today = new Date().toISOString().split('T')[0];
+                if(status !== 'done' && task.dueDate < today) status = 'overdue';
+                counts[status]++;
+
+                const card = document.createElement('div');
+                card.className = 'task-card p-6 cursor-grab active:cursor-grabbing';
+                card.setAttribute('data-id', task.id);
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${task.priority === 'high' ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}">${task.priority}</span>
+                        <button onclick="deleteTask('${task.id}')" class="text-slate-300 hover:text-rose-500 transition-all text-xs"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <h4 class="font-extrabold text-sm mb-2">${task.title}</h4>
+                    <p class="text-[10px] text-slate-400 line-clamp-2 mb-4 font-medium">${task.desc || 'No description'}</p>
+                    <div class="flex items-center gap-2 text-[9px] font-bold text-slate-400">
+                        <i class="far fa-calendar"></i> ${task.dueDate}
+                    </div>
+                `;
+                document.getElementById(cols[status]).appendChild(card);
+            });
+            Object.keys(counts).forEach(k => document.getElementById(`${k}-count`).innerText = counts[k]);
+        }
+
+        // --- ANALYTICS CHART ---
+        function updateChart() {
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            const data = {
+                labels: ['Pending', 'Working', 'Done', 'Delayed'],
+                datasets: [{
+                    data: [
+                        tasks.filter(t => t.status === 'todo').length,
+                        tasks.filter(t => t.status === 'doing').length,
+                        tasks.filter(t => t.status === 'done').length,
+                        tasks.filter(t => t.status === 'overdue').length
+                    ],
+                    backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444'],
+                    borderRadius: 15,
+                    borderWidth: 0
+                }]
+            };
+
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, { type: 'bar', data: data, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
+            
+            // Update Stats
+            document.getElementById('total-stat').innerText = tasks.length;
+            const done = tasks.filter(t => t.status === 'done').length;
+            document.getElementById('done-stat').innerText = done;
+            document.getElementById('rate-stat').innerText = tasks.length > 0 ? Math.round((done/tasks.length)*100) + '%' : '0%';
+        }
+
+        // --- HELPER FUNCTIONS ---
         window.addTask = () => document.getElementById('taskModal').style.display = 'flex';
         window.closeModal = () => document.getElementById('taskModal').style.display = 'none';
+        window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+        window.signOutUser = () => signOut(auth);
+        window.deleteTask = async (id) => { if(confirm("Discard this mission?")) await deleteDoc(doc(db, "tasks", id)); };
 
         window.saveTask = async () => {
             const title = document.getElementById('taskTitle').value;
             const desc = document.getElementById('taskDesc').value;
             const date = document.getElementById('taskDate').value;
             const priority = document.getElementById('taskPriority').value;
-            const file = document.getElementById('taskImage').files[0];
-
-            let imgBase64 = "";
-            if(file) {
-                const reader = new FileReader();
-                reader.onloadend = async () => {
-                    imgBase64 = reader.result;
-                    await addDoc(collection(db, "tasks"), { title, desc, dueDate: date, priority, status: "todo", userId: currentUser.uid, image: imgBase64 });
-                    closeModal();
-                };
-                reader.readAsDataURL(file);
-            } else {
+            if(title && date) {
                 await addDoc(collection(db, "tasks"), { title, desc, dueDate: date, priority, status: "todo", userId: currentUser.uid });
                 closeModal();
             }
         };
 
-        function listenForTasks() {
-            onSnapshot(query(collection(db, "tasks"), where("userId", "==", currentUser.uid)), (snap) => {
-                const cols = { todo: 'col-todo', doing: 'col-doing', done: 'col-done', overdue: 'col-overdue' };
-                Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
-                const today = new Date().toISOString().split('T')[0];
-                
-                snap.docs.forEach(d => {
-                    const data = d.data();
-                    let status = data.status;
-                    if (status !== 'done' && data.dueDate < today) status = 'overdue';
-
-                    const card = document.createElement('div');
-                    card.className = `glass-card p-5 group animate-in slide-in-from-bottom-2`;
-                    card.setAttribute('data-id', d.id);
-                    card.innerHTML = `
-                        ${data.image ? `<img src="${data.image}" class="w-full h-24 object-cover rounded-xl mb-3">` : ''}
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-sm">${data.title}</h4>
-                            <span class="p-${data.priority} px-2 py-0.5 rounded-lg text-[7px] font-black uppercase">${data.priority}</span>
-                        </div>
-                        <p class="text-[10px] text-slate-400 mb-4 line-clamp-2">${data.desc || ""}</p>
-                        <div class="flex items-center justify-between pt-3 border-t dark:border-slate-800">
-                            <span class="text-[9px] font-bold text-blue-500"><i class="far fa-calendar-alt mr-1"></i> ${data.dueDate}</span>
-                            <button onclick="deleteTask('${d.id}')" class="text-rose-400 opacity-0 group-hover:opacity-100 transition-all"><i class="fas fa-trash"></i></button>
-                        </div>
-                    `;
-                    document.getElementById(cols[status]).appendChild(card);
-                });
+        function initSortable() {
+            ['col-todo', 'col-doing', 'col-done', 'col-overdue'].forEach(id => {
+                new Sortable(document.getElementById(id), { group: 'tasks', animation: 250, onEnd: async (e) => {
+                    await updateDoc(doc(db, "tasks", e.item.getAttribute('data-id')), { status: e.to.getAttribute('data-status') });
+                }});
             });
         }
 
-        window.deleteTask = async (id) => { if(confirm("Delete?")) await deleteDoc(doc(db, "tasks", id)); };
-        window.signOutUser = () => signOut(auth);
-
-        // 3D Visualizer
+        // Background Animation
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        const mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshNormalMaterial({ wireframe: true, transparent: true, opacity: 0.1 }));
-        scene.add(mesh); camera.position.z = 30;
-        function animate() { requestAnimationFrame(animate); mesh.rotation.y += 0.003; renderer.render(scene, camera); }
+        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+        const material = new THREE.MeshNormalMaterial({ wireframe: true, opacity: 0.1, transparent: true });
+        const torusKnot = new THREE.Mesh(geometry, material);
+        scene.add(torusKnot); camera.position.z = 30;
+        function animate() { requestAnimationFrame(animate); torusKnot.rotation.x += 0.001; torusKnot.rotation.y += 0.002; renderer.render(scene, camera); }
         animate();
     </script>
 </body>
