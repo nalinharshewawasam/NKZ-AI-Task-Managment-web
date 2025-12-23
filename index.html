@@ -17,14 +17,19 @@
         :root { --bg-main: #f8fafc; --text-main: #1e293b; --card-bg: #ffffff; --border: rgba(0,0,0,0.05); }
         .dark-mode { --bg-main: #020617; --text-main: #f1f5f9; --card-bg: #0f172a; --border: rgba(255,255,255,0.1); }
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); transition: background 0.4s, color 0.4s; overflow-x: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-main); color: var(--text-main); transition: 0.4s; overflow-x: hidden; }
         
-        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 1.5rem; transition: 0.3s; cursor: grab; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .dark-mode .glass-card { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4); }
+        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 1.5rem; transition: 0.3s; cursor: grab; }
+        .dark-mode .glass-card { color: #f1f5f9; }
 
         .sidebar { background: #020617; color: white; width: 280px; z-index: 50; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(12px); }
         
+        /* Calendar Styles */
+        .calendar-day { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .calendar-day:hover { background: rgba(255,255,255,0.1); }
+        .calendar-day.active { background: #3b82f6; color: white; font-weight: bold; }
+
         #profile-dropdown { display: none; position: absolute; left: 20px; bottom: 80px; width: 240px; background: var(--card-bg); color: var(--text-main); border-radius: 1.2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 60; border: 1px solid var(--border); }
         
         .p-high { background: #ef4444; color: white; }
@@ -39,97 +44,96 @@
     <canvas id="bg-canvas"></canvas>
 
     <div id="taskModal" class="modal">
-        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] w-[95%] max-w-lg shadow-2xl">
-            <h3 class="text-2xl font-black mb-6">Create New Task</h3>
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] w-[95%] max-w-lg">
+            <h3 class="text-2xl font-black mb-6">Deploy New Mission</h3>
             <div class="space-y-4">
-                <input type="text" id="taskTitle" placeholder="Task Title" class="w-full p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-blue-500 dark:text-white">
-                <textarea id="taskDesc" placeholder="Describe the task details..." class="w-full p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-blue-500 h-24 dark:text-white"></textarea>
-                
+                <input type="text" id="taskTitle" placeholder="Task Name" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-blue-500 dark:text-white">
+                <textarea id="taskDesc" placeholder="Description..." class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-blue-500 h-24 dark:text-white"></textarea>
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="date" id="taskDate" class="p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-blue-500 text-sm dark:text-white">
-                    <select id="taskPriority" class="p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-blue-500 text-sm dark:text-white">
-                        <option value="high">🔥 High Priority</option>
-                        <option value="medium" selected>⚡ Medium Priority</option>
-                        <option value="low">🍃 Low Priority</option>
+                    <input type="date" id="taskDate" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-sm dark:text-white">
+                    <select id="taskPriority" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-sm dark:text-white">
+                        <option value="high">🔥 High</option>
+                        <option value="medium" selected>⚡ Medium</option>
+                        <option value="low">🍃 Low</option>
                     </select>
                 </div>
-
                 <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 p-4 rounded-2xl text-center">
                     <label class="cursor-pointer">
-                        <i class="fas fa-cloud-upload-alt text-2xl text-blue-500 mb-2"></i>
-                        <p class="text-xs font-bold text-slate-400">Click to upload task image</p>
+                        <p class="text-xs font-bold text-slate-400">Upload Attachment (Image)</p>
                         <input type="file" id="taskImage" class="hidden" accept="image/*">
                     </label>
-                    <div id="img-preview" class="mt-2 hidden"><img src="" class="h-20 mx-auto rounded-lg shadow-md"></div>
+                    <div id="img-preview" class="mt-2 hidden"><img src="" class="h-16 mx-auto rounded-lg"></div>
                 </div>
-
                 <div class="flex gap-4 mt-6">
                     <button onclick="closeModal()" class="flex-1 py-4 text-slate-400 font-bold">Cancel</button>
-                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg">Save Task</button>
+                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl">Save Task</button>
                 </div>
             </div>
         </div>
     </div>
 
     <aside class="sidebar p-6 hidden md:flex flex-col h-full relative">
-        <div class="flex items-center gap-3 mb-12">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center"><i class="fas fa-shield-alt text-white"></i></div>
-            <span class="text-xl font-black tracking-tight">NKZ MASTER</span>
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center"><i class="fas fa-bolt text-white"></i></div>
+            <span class="text-xl font-black">NKZ MASTER</span>
         </div>
 
-        <nav class="flex-1 space-y-4">
-            <button onclick="showView('dashboard')" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white shadow-lg shadow-blue-500/30 transition-all"><i class="fas fa-grip-horizontal"></i> Workspace</button>
-            <button onclick="showView('analytics')" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all"><i class="fas fa-chart-bar"></i> Efficiency</button>
+        <div class="bg-white/5 p-4 rounded-3xl mb-8 border border-white/10">
+            <div class="flex justify-between items-center mb-4 px-1">
+                <button onclick="changeMonth(-1)" class="text-[10px]"><i class="fas fa-chevron-left"></i></button>
+                <span id="monthDisplay" class="text-[10px] font-black uppercase tracking-widest text-blue-400">DECEMBER</span>
+                <button onclick="changeMonth(1)" class="text-[10px]"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                <div class="text-[8px] opacity-40 font-bold">M</div><div class="text-[8px] opacity-40 font-bold">T</div><div class="text-[8px] opacity-40 font-bold">W</div><div class="text-[8px] opacity-40 font-bold">T</div><div class="text-[8px] opacity-40 font-bold">F</div><div class="text-[8px] opacity-40 font-bold">S</div><div class="text-[8px] opacity-40 font-bold">S</div>
+            </div>
+            <div class="grid grid-cols-7 gap-1" id="calendarGrid"></div>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <button onclick="showView('dashboard')" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-blue-600 font-bold text-white"><i class="fas fa-layer-group"></i> Workspace</button>
+            <button onclick="showView('analytics')" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-400 hover:bg-white/5 font-bold"><i class="fas fa-chart-pie"></i> Analytics</button>
         </nav>
 
         <div class="mt-auto relative">
-            <div onclick="toggleProfileDropdown()" class="bg-white/5 border border-white/10 p-4 rounded-3xl flex items-center gap-3 cursor-pointer hover:bg-white/10 transition-all">
+            <div onclick="toggleProfileDropdown()" class="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-3 cursor-pointer">
                 <div id="user-initials" class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center font-black">U</div>
-                <div class="flex-1 overflow-hidden">
-                    <p id="user-display-name" class="text-xs font-black truncate">User Name</p>
-                    <p class="text-[9px] text-slate-500 font-bold">Pro Account</p>
-                </div>
-                <i class="fas fa-ellipsis-v text-xs text-slate-600"></i>
+                <div class="flex-1 overflow-hidden"><p id="user-display-name" class="text-xs font-black truncate">User</p></div>
             </div>
-            
             <div id="profile-dropdown">
-                <button onclick="toggleDarkMode()" class="w-full text-left px-5 py-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-xl transition-all"><i class="fas fa-moon mr-3 text-blue-500"></i> Dark Mode</button>
-                <button onclick="signOutUser()" class="w-full text-left px-5 py-4 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 rounded-b-xl transition-all border-t border-slate-100 dark:border-slate-800"><i class="fas fa-sign-out-alt mr-3"></i> Sign Out</button>
+                <button onclick="toggleDarkMode()" class="w-full text-left px-5 py-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-xl font-bold text-sm"><i class="fas fa-moon mr-3"></i> Dark Mode</button>
+                <button onclick="signOutUser()" class="w-full text-left px-5 py-4 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 rounded-b-xl font-bold text-sm border-t dark:border-slate-800"><i class="fas fa-power-off mr-3"></i> Sign Out</button>
             </div>
         </div>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
-        
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
-            <div>
-                <h2 class="text-3xl font-black tracking-tight">Mission Control</h2>
-                <p class="text-slate-400 text-sm font-bold">Drag tasks to optimize your workflow.</p>
+        <header class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+            <div class="relative w-full md:w-96">
+                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search missions..." class="w-full pl-14 pr-6 py-4 bg-white dark:bg-slate-800 rounded-2xl outline-none shadow-sm dark:text-white">
             </div>
-            <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-600/20 transform active:scale-95 transition-all">+ NEW TASK</button>
-        </div>
+            <button onclick="addTask()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl">+ NEW TASK</button>
+        </header>
 
-        <div id="dashboard-view">
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-                <div class="space-y-4">
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 flex justify-between">Pending <span class="bg-slate-200 dark:bg-slate-800 px-2 rounded" id="todo-count">0</span></h3>
-                    <div id="col-todo" class="column-container min-h-[500px] space-y-4" data-status="todo"></div>
-                </div>
-                <div class="space-y-4">
-                    <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] px-2 flex justify-between">Working <span class="bg-blue-100 dark:bg-blue-900/30 px-2 rounded" id="doing-count">0</span></h3>
-                    <div id="col-doing" class="column-container min-h-[500px] space-y-4" data-status="doing"></div>
-                </div>
-                <div class="space-y-4">
-                    <h3 class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] px-2 flex justify-between">Success <span class="bg-emerald-100 dark:bg-emerald-900/30 px-2 rounded" id="done-count">0</span></h3>
-                    <div id="col-done" class="column-container min-h-[500px] space-y-4" data-status="done"></div>
-                </div>
-                <div class="space-y-4">
-                    <h3 class="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] px-2 flex justify-between">Delayed <span class="bg-rose-100 dark:bg-rose-900/30 px-2 rounded" id="overdue-count">0</span></h3>
-                    <div id="col-overdue" class="column-container min-h-[500px] space-y-4" data-status="overdue"></div>
-                </div>
+        <div id="dashboard-view" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+            <div class="space-y-4">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Pending</h3>
+                <div id="col-todo" class="column-container min-h-[500px] space-y-4" data-status="todo"></div>
+            </div>
+            <div class="space-y-4">
+                <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest px-2">Working</h3>
+                <div id="col-doing" class="column-container min-h-[500px] space-y-4" data-status="doing"></div>
+            </div>
+            <div class="space-y-4">
+                <h3 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-2">Done</h3>
+                <div id="col-done" class="column-container min-h-[500px] space-y-4" data-status="done"></div>
+            </div>
+            <div class="space-y-4">
+                <h3 class="text-[10px] font-black text-rose-500 uppercase tracking-widest px-2">Delayed</h3>
+                <div id="col-overdue" class="column-container min-h-[500px] space-y-4" data-status="overdue"></div>
             </div>
         </div>
-
     </main>
 
     <script type="module">
@@ -137,58 +141,43 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // FIREBASE CONFIG (SAME AS BEFORE)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDd6T85SZAc9eh0Kv2BjaKg4GKHP659bgY",
-            authDomain: "nkz-task-management.firebaseapp.com",
-            projectId: "nkz-task-management",
-            storageBucket: "nkz-task-management.firebasestorage.app",
-            messagingSenderId: "880985174490",
-            appId: "1:880985174490:web:9080e073b462e3201410e3"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyDd6T85SZAc9eh0Kv2BjaKg4GKHP659bgY", authDomain: "nkz-task-management.firebaseapp.com", projectId: "nkz-task-management", storageBucket: "nkz-task-management.firebasestorage.app", messagingSenderId: "880985174490", appId: "1:880985174490:web:9080e073b462e3201410e3" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         let currentUser = null;
+        let currentMonth = new Date();
 
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
                 document.getElementById('user-display-name').innerText = user.email.split('@')[0];
                 document.getElementById('user-initials').innerText = user.email.charAt(0).toUpperCase();
-                listenForTasks(); 
-                initSortable();
+                renderCalendar(); listenForTasks(); initSortable();
             } else { window.location.href = 'login.html'; }
         });
 
-        // DARK MODE & PROFILE
-        window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
-        window.toggleProfileDropdown = () => {
-            const d = document.getElementById('profile-dropdown');
-            d.style.display = d.style.display === 'block' ? 'none' : 'block';
-        };
-
-        // IMAGE PREVIEW LOGIC
-        document.getElementById('taskImage').onchange = function() {
-            const [file] = this.files;
-            if (file) {
-                const preview = document.getElementById('img-preview');
-                preview.classList.remove('hidden');
-                preview.children[0].src = URL.createObjectURL(file);
+        // Calendar Logic
+        window.changeMonth = (dir) => { currentMonth.setMonth(currentMonth.getMonth() + dir); renderCalendar(); };
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
+            document.getElementById('monthDisplay').innerText = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+            const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+            for(let i=1; i<=daysInMonth; i++) {
+                const d = document.createElement('div');
+                d.className = `calendar-day ${i === new Date().getDate() && currentMonth.getMonth() === new Date().getMonth() ? 'active' : 'text-slate-500'}`;
+                d.innerText = i; grid.appendChild(d);
             }
-        };
+        }
+
+        window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+        window.toggleProfileDropdown = () => { const d = document.getElementById('profile-dropdown'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; };
 
         function initSortable() {
             ['col-todo', 'col-doing', 'col-done', 'col-overdue'].forEach(id => {
-                new Sortable(document.getElementById(id), {
-                    group: 'tasks', animation: 250,
-                    onEnd: async (evt) => {
-                        const taskId = evt.item.getAttribute('data-id');
-                        const newStatus = evt.to.getAttribute('data-status');
-                        await updateDoc(doc(db, "tasks", taskId), { status: newStatus });
-                    }
-                });
+                new Sortable(document.getElementById(id), { group: 'tasks', animation: 200, onEnd: async (e) => {
+                    await updateDoc(doc(db, "tasks", e.item.getAttribute('data-id')), { status: e.to.getAttribute('data-status') });
+                }});
             });
         }
 
@@ -200,65 +189,55 @@
             const desc = document.getElementById('taskDesc').value;
             const date = document.getElementById('taskDate').value;
             const priority = document.getElementById('taskPriority').value;
-            
-            if (title && date) {
-                // Image Handling (Simulated Base64 for now to keep it simple)
-                let imgData = "";
-                const file = document.getElementById('taskImage').files[0];
-                if(file) {
-                    const reader = new FileReader();
-                    reader.onloadend = async () => {
-                        imgData = reader.result;
-                        await addDoc(collection(db, "tasks"), { title, desc, dueDate: date, priority, status: "todo", userId: currentUser.uid, image: imgData });
-                        closeModal();
-                    }
-                    reader.readAsDataURL(file);
-                } else {
-                    await addDoc(collection(db, "tasks"), { title, desc, dueDate: date, priority, status: "todo", userId: currentUser.uid });
+            const file = document.getElementById('taskImage').files[0];
+
+            let imgBase64 = "";
+            if(file) {
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    imgBase64 = reader.result;
+                    await addDoc(collection(db, "tasks"), { title, desc, dueDate: date, priority, status: "todo", userId: currentUser.uid, image: imgBase64 });
                     closeModal();
-                }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                await addDoc(collection(db, "tasks"), { title, desc, dueDate: date, priority, status: "todo", userId: currentUser.uid });
+                closeModal();
             }
         };
 
         function listenForTasks() {
-            onSnapshot(query(collection(db, "tasks"), where("userId", "==", currentUser.uid)), (snapshot) => {
+            onSnapshot(query(collection(db, "tasks"), where("userId", "==", currentUser.uid)), (snap) => {
                 const cols = { todo: 'col-todo', doing: 'col-doing', done: 'col-done', overdue: 'col-overdue' };
                 Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
-                
                 const today = new Date().toISOString().split('T')[0];
-                let counts = { todo: 0, doing: 0, done: 0, overdue: 0 };
-
-                snapshot.docs.forEach(d => {
+                
+                snap.docs.forEach(d => {
                     const data = d.data();
                     let status = data.status;
                     if (status !== 'done' && data.dueDate < today) status = 'overdue';
-                    counts[status]++;
 
                     const card = document.createElement('div');
-                    card.className = `glass-card p-5 group animate-in zoom-in-95 duration-200`;
+                    card.className = `glass-card p-5 group animate-in slide-in-from-bottom-2`;
                     card.setAttribute('data-id', d.id);
-                    
-                    const imgHtml = data.image ? `<img src="${data.image}" class="w-full h-32 object-cover rounded-xl mb-3 shadow-inner">` : "";
-                    
                     card.innerHTML = `
-                        ${imgHtml}
-                        <div class="flex justify-between items-start mb-3">
-                            <h4 class="font-bold text-sm leading-snug">${data.title}</h4>
+                        ${data.image ? `<img src="${data.image}" class="w-full h-24 object-cover rounded-xl mb-3">` : ''}
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-sm">${data.title}</h4>
                             <span class="p-${data.priority} px-2 py-0.5 rounded-lg text-[7px] font-black uppercase">${data.priority}</span>
                         </div>
-                        <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 font-medium">${data.desc || "No description provided."}</p>
-                        <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-                            <span class="text-[9px] font-bold text-blue-500 uppercase tracking-tighter"><i class="far fa-calendar-alt mr-1"></i> ${data.dueDate}</span>
+                        <p class="text-[10px] text-slate-400 mb-4 line-clamp-2">${data.desc || ""}</p>
+                        <div class="flex items-center justify-between pt-3 border-t dark:border-slate-800">
+                            <span class="text-[9px] font-bold text-blue-500"><i class="far fa-calendar-alt mr-1"></i> ${data.dueDate}</span>
                             <button onclick="deleteTask('${d.id}')" class="text-rose-400 opacity-0 group-hover:opacity-100 transition-all"><i class="fas fa-trash"></i></button>
                         </div>
                     `;
                     document.getElementById(cols[status]).appendChild(card);
                 });
-                Object.keys(counts).forEach(k => document.getElementById(`${k}-count`).innerText = counts[k]);
             });
         }
 
-        window.deleteTask = async (id) => { if(confirm("Discard this mission?")) await deleteDoc(doc(db, "tasks", id)); };
+        window.deleteTask = async (id) => { if(confirm("Delete?")) await deleteDoc(doc(db, "tasks", id)); };
         window.signOutUser = () => signOut(auth);
 
         // 3D Visualizer
