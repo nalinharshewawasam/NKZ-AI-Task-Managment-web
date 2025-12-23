@@ -1,86 +1,194 @@
-<style>
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-    .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NKZ Pro | Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<div id="taskModal" class="modal">
-    <div class="modal-content">
-        <h3 class="text-xl font-bold mb-4 text-slate-800">New Task</h3>
-        <div class="space-y-4">
-            <input type="text" id="taskTitle" placeholder="What needs to be done?" class="w-full p-3 border rounded-xl outline-blue-500">
-            <div class="grid grid-cols-2 gap-3">
-                <input type="date" id="taskDate" class="p-3 border rounded-xl outline-blue-500 text-sm">
-                <input type="time" id="taskTime" class="p-3 border rounded-xl outline-blue-500 text-sm">
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-100 rounded-xl transition">Cancel</button>
-                <button onclick="saveTask()" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition">Save Task</button>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; overflow: hidden; margin: 0; }
+        .glass-sidebar { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(15px); }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.6); transition: 0.3s; }
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; }
+        
+        /* Modal Styles */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-content { background: white; padding: 2.5rem; border-radius: 2rem; width: 90%; max-width: 450px; }
+
+        /* Loading Screen */
+        #loading-screen { position: fixed; inset: 0; background: #020617; z-index: 999; display: flex; align-items: center; justify-content: center; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen"><i class="fas fa-circle-notch fa-spin text-4xl text-blue-500"></i></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-6 text-slate-800">Add New Task</h3>
+            <div class="space-y-4">
+                <input type="text" id="taskTitle" placeholder="Task Title" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-blue-500">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="date" id="taskDate" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-blue-500 text-sm">
+                    <input type="time" id="taskTime" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-blue-500 text-sm">
+                </div>
+                <div class="flex gap-4 mt-8">
+                    <button onclick="closeModal()" class="flex-1 py-4 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition">Cancel</button>
+                    <button onclick="saveTask()" class="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-xl hover:bg-blue-700 transition">Save Task</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script type="module">
-    // ... (Firebase Initialize කරන කොටස කලින් වගේමයි)
+    <div class="flex h-screen w-full relative z-10">
+        <aside class="w-64 glass-sidebar text-white flex flex-col">
+            <div class="p-8 flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg"><i class="fas fa-bolt text-white"></i></div>
+                <span class="text-xl font-bold tracking-tight">NKZ Pro</span>
+            </div>
+            <nav class="flex-1 px-4 mt-4">
+                <button class="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-blue-600 shadow-lg text-white font-bold"><i class="fas fa-th-large"></i> Dashboard</button>
+            </nav>
+            <div class="p-6 border-t border-white/10">
+                <button id="logout-btn" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
 
-    // --- MODAL FUNCTIONS ---
-    window.addTask = () => {
-        document.getElementById('taskModal').style.display = 'flex';
-    };
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="h-24 flex items-center justify-between px-10 bg-white/40 border-b border-slate-200/50">
+                <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">Dashboard</h2>
+                <button onclick="addTask()" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold shadow-xl hover:bg-blue-700 hover:scale-105 transition-all">+ Add Task</button>
+            </header>
 
-    window.closeModal = () => {
-        document.getElementById('taskModal').style.display = 'none';
-        document.getElementById('taskTitle').value = '';
-    };
+            <div class="p-10 grid grid-cols-1 md:grid-cols-3 gap-10 overflow-y-auto">
+                <div>
+                    <h3 class="font-bold text-slate-400 mb-6 uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+                        <span class="w-2 h-2 bg-slate-300 rounded-full"></span> To Do
+                    </h3>
+                    <div id="col-todo" class="space-y-5"></div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-blue-500 mb-6 uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> In Progress
+                    </h3>
+                    <div id="col-doing" class="space-y-5"></div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-emerald-500 mb-6 uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Done
+                    </h3>
+                    <div id="col-done" class="space-y-5"></div>
+                </div>
+            </div>
+        </main>
+    </div>
 
-    // --- SAVE TO FIREBASE ---
-    window.saveTask = async () => {
-        const title = document.getElementById('taskTitle').value;
-        const date = document.getElementById('taskDate').value;
-        const time = document.getElementById('taskTime').value;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        if (title && date && time) {
-            try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyDd6T85SZAc9eh0Kv2BjaKg4GKHP659bgY",
+            authDomain: "nkz-task-management.firebaseapp.com",
+            projectId: "nkz-task-management",
+            storageBucket: "nkz-task-management.firebasestorage.app",
+            messagingSenderId: "880985174490",
+            appId: "1:880985174490:web:9080e073b462e3201410e3",
+            measurementId: "G-S96M78ZHSL"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('loading-screen').style.display = 'none';
+                listenForTasks();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+        // Global Window Functions
+        window.addTask = () => document.getElementById('taskModal').style.display = 'flex';
+        window.closeModal = () => {
+            document.getElementById('taskModal').style.display = 'none';
+            document.getElementById('taskTitle').value = '';
+        };
+
+        window.saveTask = async () => {
+            const title = document.getElementById('taskTitle').value;
+            const date = document.getElementById('taskDate').value;
+            const time = document.getElementById('taskTime').value;
+
+            if (title && date && time) {
                 await addDoc(collection(db, "tasks"), {
                     title: title,
                     dueDate: date,
                     dueTime: time,
                     status: "todo",
                     userId: currentUser.uid,
-                    createdAt: new Date().toISOString()
+                    createdAt: serverTimestamp()
                 });
-                closeModal();
-            } catch (e) { alert("Error: " + e.message); }
-        } else {
-            alert("Please fill all fields!");
-        }
-    };
+                window.closeModal();
+            } else { alert("All fields are required!"); }
+        };
 
-    // --- RENDER TASKS (Update UI to show Date/Time) ---
-    function listenForTasks() {
-        const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
-        onSnapshot(q, (snapshot) => {
-            const cols = { todo: document.getElementById('col-todo'), doing: document.getElementById('col-doing'), done: document.getElementById('col-done') };
-            Object.values(cols).forEach(c => c.innerHTML = '');
+        window.moveTask = async (id, status) => await updateDoc(doc(db, "tasks", id), { status });
+        window.deleteTask = async (id) => { if(confirm("Delete task?")) await deleteDoc(doc(db, "tasks", id)); };
 
-            snapshot.docs.forEach(d => {
-                const data = d.data();
-                const card = document.createElement('div');
-                card.className = "glass-card p-5 rounded-2xl shadow-sm relative group mb-4";
-                card.innerHTML = `
-                    <p class="font-bold text-slate-800 mb-1">${data.title}</p>
-                    <div class="flex items-center gap-2 text-[11px] text-slate-500 mb-4">
-                        <i class="far fa-calendar-alt text-blue-500"></i> ${data.dueDate} 
-                        <i class="far fa-clock text-blue-500 ml-2"></i> ${data.dueTime}
-                    </div>
-                    <div class="flex gap-2">
-                        ${data.status === 'todo' ? `<button onclick="moveTask('${d.id}', 'doing')" class="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-lg font-bold">Start</button>` : ''}
-                        ${data.status === 'doing' ? `<button onclick="moveTask('${d.id}', 'done')" class="text-[10px] bg-green-50 text-green-600 px-3 py-1 rounded-lg font-bold">Done</button>` : ''}
-                        <button onclick="deleteTask('${d.id}')" class="text-[10px] text-red-400 ml-auto group-hover:opacity-100 opacity-0 transition"><i class="fas fa-trash"></i></button>
-                    </div>
-                `;
-                cols[data.status].appendChild(card);
+        function listenForTasks() {
+            const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
+            onSnapshot(q, (snapshot) => {
+                const cols = { todo: document.getElementById('col-todo'), doing: document.getElementById('col-doing'), done: document.getElementById('col-done') };
+                Object.values(cols).forEach(c => c.innerHTML = '');
+
+                snapshot.docs.forEach(d => {
+                    const data = d.data();
+                    const card = document.createElement('div');
+                    card.className = "glass-card p-6 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-xl transition-all";
+                    card.innerHTML = `
+                        <h4 class="font-bold text-slate-800 mb-2">${data.title}</h4>
+                        <div class="flex items-center gap-3 text-[11px] font-bold text-slate-400 mb-5">
+                            <span class="flex items-center gap-1"><i class="far fa-calendar text-blue-500"></i> ${data.dueDate}</span>
+                            <span class="flex items-center gap-1"><i class="far fa-clock text-blue-500"></i> ${data.dueTime}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            ${data.status === 'todo' ? `<button onclick="moveTask('${d.id}', 'doing')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-bold">Start Now</button>` : ''}
+                            ${data.status === 'doing' ? `<button onclick="moveTask('${d.id}', 'done')" class="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-bold">Mark Done</button>` : ''}
+                            <button onclick="deleteTask('${d.id}')" class="ml-auto text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    `;
+                    cols[data.status].appendChild(card);
+                });
             });
-        });
-    }
-</script>
+        }
+
+        // 3D Background
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshNormalMaterial({ wireframe: true, transparent: true, opacity: 0.1 }));
+        scene.add(mesh); camera.position.z = 30;
+        function animate() { requestAnimationFrame(animate); mesh.rotation.x += 0.003; mesh.rotation.y += 0.002; renderer.render(scene, camera); }
+        animate();
+    </script>
+</body>
+</html>
